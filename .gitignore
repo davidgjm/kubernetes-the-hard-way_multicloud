@@ -53,4 +53,5 @@ service-account-csr.json
 .idea/
 
 **/.terraform/
-/azure/infra/terraform.tfstate.backup
+**terraform.tfstate.backup
+**/terraform.tfstate
