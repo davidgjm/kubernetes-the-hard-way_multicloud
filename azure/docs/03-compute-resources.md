@@ -4,6 +4,9 @@ Kubernetes requires a set of machines to host the Kubernetes control plane and t
 
 > Ensure a default compute zone and region have been set as described in the [Prerequisites](01-prerequisites.md#set-a-default-compute-region-and-zone) lab.
 
+## Resource Grouping
+All cloud resources created in Azure should be put into a _Resource Group_. We will use `kthw` as the resource group name throughout the lab practices.
+
 ## Networking
 
 The Kubernetes [networking model](https://kubernetes.io/docs/concepts/cluster-administration/networking/#kubernetes-model) assumes a flat network in which containers and nodes can communicate with each other. In cases where this is not desired [network policies](https://kubernetes.io/docs/concepts/services-networking/network-policies/) can limit how groups of containers are allowed to communicate with each other and external network endpoints.
@@ -73,21 +76,23 @@ kubernetes-the-hard-way-allow-internal  kubernetes-the-hard-way  INGRESS    1000
 Allocate a static IP address that will be attached to the external load balancer fronting the Kubernetes API Servers:
 
 ```
-gcloud compute addresses create kubernetes-the-hard-way \
-  --region $(gcloud config get-value compute/region)
+az network public-ip create -g kthw \
+  --allocation-method Static -n kubernetes-the-hard-way
 ```
 
 Verify the `kubernetes-the-hard-way` static IP address was created in your default compute region:
 
 ```
 gcloud compute addresses list --filter="name=('kubernetes-the-hard-way')"
+az network public-ip list -g kthw -o table
 ```
 
 > output
 
 ```
-NAME                     ADDRESS/RANGE   TYPE      PURPOSE  NETWORK  REGION    SUBNET  STATUS
-kubernetes-the-hard-way  XX.XXX.XXX.XXX  EXTERNAL                    us-west1          RESERVED
+Name                     ResourceGroup    Location    Zones    Address        IdleTimeoutInMinutes    ProvisioningState
+-----------------------  ---------------  ----------  -------  -------------  ----------------------  -------------------
+kubernetes-the-hard-way  kthw             eastus2              xx.xxx.xx.xxx  4                       Succeeded
 ```
 
 ## Compute Instances

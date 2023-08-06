@@ -73,4 +73,8 @@ resource "azurerm_linux_virtual_machine" "controllers" {
     storage_account_type = "Standard_LRS"
   }
 
+  tags = {
+    group = "kubernetes-the-hard-way"
+    type = "controller"
+  }
 }
