@@ -55,3 +55,4 @@ service-account-csr.json
 **/.terraform/
 **terraform.tfstate.backup
 **/terraform.tfstate
+**/local.tfvars
