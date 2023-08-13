@@ -1,18 +1,18 @@
+resource "azurerm_subnet" "dmz_zone" {
+  name                 = "dmz-zone"
+  virtual_network_name = azurerm_virtual_network.kthw.name
+  address_prefixes     = [var.dmz_zone.cidr]
+  resource_group_name  = azurerm_resource_group.kthw.name
+}
 
-resource "azurerm_public_ip" "dmz" {
-  name                = "dmz"
-  allocation_method   = "Dynamic"
+
+resource "azurerm_public_ip" "load_balancer" {
+  name                = var.dmz_zone.load_balancer.public_ip.name
+  allocation_method   = "Static"
   location            = azurerm_resource_group.kthw.location
   resource_group_name = azurerm_resource_group.kthw.name
 }
 
-
-resource "azurerm_subnet" "dmz" {
-  name                 = "dmz"
-  virtual_network_name = azurerm_virtual_network.vnet.name
-  address_prefixes     = [var.dmz_subnet_cidr]
-  resource_group_name  = azurerm_resource_group.kthw.name
-}
 
 
 resource "azurerm_network_security_group" "dmz" {
@@ -35,53 +35,54 @@ resource "azurerm_network_security_rule" "dmz_ssh" {
   destination_address_prefix  = "*"
 }
 
-resource "azurerm_network_interface" "dmz" {
-  name                = "dmz-nic"
+resource "azurerm_network_interface" "load_balancer" {
+  name                = format("%s-nic", var.dmz_zone.load_balancer.name)
   location            = azurerm_resource_group.kthw.location
   resource_group_name = azurerm_resource_group.kthw.name
 
 
   ip_configuration {
-    name                          = "testconfiguration1"
-    subnet_id                     = azurerm_subnet.dmz.id
-    private_ip_address_allocation = "Dynamic"
-    public_ip_address_id = azurerm_public_ip.dmz.id
+    name                          = format("%s-ip", var.dmz_zone.load_balancer.name)
+    subnet_id                     = azurerm_subnet.dmz_zone.id
+    private_ip_address_allocation = "Static"
+    private_ip_address = var.dmz_zone.load_balancer.private_ip
+    public_ip_address_id = azurerm_public_ip.load_balancer.id
   }
 }
 
 resource "azurerm_network_interface_security_group_association" "dmz" {
-  network_interface_id      = azurerm_network_interface.dmz.id
+  network_interface_id      = azurerm_network_interface.load_balancer.id
   network_security_group_id = azurerm_network_security_group.dmz.id
 }
 
-resource "azurerm_linux_virtual_machine" "dmz" {
-  name                  = "dmz"
+resource "azurerm_linux_virtual_machine" "load_balancer" {
+  name                  = format("%s-vm", var.dmz_zone.load_balancer.name)
   resource_group_name   = azurerm_resource_group.kthw.name
   location              = var.region
   size                  = var.vm_size
-  network_interface_ids = [azurerm_network_interface.dmz.id]
+  network_interface_ids = [azurerm_network_interface.load_balancer.id]
 
-  admin_username = var.admin_username
+  admin_username = var.vm_instance.ssh_key.username
   admin_ssh_key {
     public_key                      = file("~/.ssh/id_rsa.pub")
-    username                        = var.admin_username
+    username                        = var.vm_instance.ssh_key.username
   }
 
-  custom_data = base64encode(file("cloud-init/dmz.yaml"))
+  custom_data = base64encode(file("cloud-init/load-balancer.yaml"))
 
   eviction_policy = "Delete"
   priority = "Spot"
   max_bid_price = var.spot_max_price
 
   source_image_reference {
-    publisher = "Canonical"
-    offer     = "0001-com-ubuntu-server-jammy"
-    sku       = "22_04-LTS"
-    version   = "latest"
+    publisher = var.vm_image.publisher
+    offer     = var.vm_image.offer
+    sku       = var.vm_image.sku
+    version   = var.vm_image.version
   }
 
   os_disk {
-    name                 = "myosdisk1"
+    name                 = format("%s-vm-disk", var.dmz_zone.load_balancer.name)
     caching              = "ReadWrite"
     storage_account_type = "Standard_LRS"
   }

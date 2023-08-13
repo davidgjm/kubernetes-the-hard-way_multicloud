@@ -1,3 +1,9 @@
+# Disclaimer
+
+This is a fork from Kelsey Hightower's *Kubernetes The Hard Way*. A lot of modifications are made on top of Kelsey's work. If you're looking for the original content, please check [Kubernetes The Hard Way](https://github.com/kelseyhightower/kubernetes-the-hard-way).
+
+This edited version also follows the original author's license - <a rel="license" href="http://creativecommons.org/licenses/by-nc-sa/4.0/">Creative Commons Attribution-NonCommercial-ShareAlike 4.0 International License</a>.
+
 # Kubernetes The Hard Way
 
 This tutorial walks you through setting up Kubernetes the hard way. This guide is not for people looking for a fully automated command to bring up a Kubernetes cluster. If that's you then check out [Google Kubernetes Engine](https://cloud.google.com/kubernetes-engine), or the [Getting Started Guides](https://kubernetes.io/docs/setup).

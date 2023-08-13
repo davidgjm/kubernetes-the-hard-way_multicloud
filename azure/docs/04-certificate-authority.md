@@ -51,7 +51,7 @@ admin.pem
 
 ### The Kubelet Client Certificates
 
-Kubernetes uses a [special-purpose authorization mode](https://kubernetes.io/docs/admin/authorization/node/) called Node Authorizer, that specifically authorizes API requests made by [Kubelets](https://kubernetes.io/docs/concepts/overview/components/#kubelet). In order to be authorized by the Node Authorizer, Kubelets must use a credential that identifies them as being in the `system:nodes` group, with a username of `system:node:<nodeName>`. In this section you will create a certificate for each Kubernetes worker node that meets the Node Authorizer requirements.
+Kubernetes uses a [special-purpose authorization mode](https://kubernetes.io/docs/reference/access-authn-authz/node/) called Node Authorizer, that specifically authorizes API requests made by [Kubelets](https://kubernetes.io/docs/concepts/overview/components/#kubelet). In order to be authorized by the Node Authorizer, Kubelets must use a credential that identifies them as being in the `system:nodes` group, with a username of `system:node:<nodeName>`. In this section you will create a certificate for each Kubernetes worker node that meets the Node Authorizer requirements.
 
 Generate a certificate and private key for each Kubernetes worker node:
 
@@ -172,6 +172,10 @@ cfssl gencert \
 }
 ```
 
+```shell
+# ../certs/generate-api-server-certs.sh
+```
+
 > The Kubernetes API server is automatically assigned the `kubernetes` internal dns name, which will be linked to the first IP address (`10.32.0.1`) from the address range (`10.32.0.0/24`) reserved for internal cluster services during the [control plane bootstrapping](08-bootstrapping-kubernetes-controllers.md#configure-the-kubernetes-api-server) lab.
 
 Results:
@@ -207,19 +211,116 @@ service-account.pem
 
 ## Distribute the Client and Server Certificates
 
-Copy the appropriate certificates and private keys to each worker instance:
+As the load balancer VM is the only VM exposed to the internet, we will need to copy all resources into this machine and distribute from there.
 
+
+### Setup load balancer vm
+
+#### Login the load balancer VM
 ```
+➜  infra git:(azure) ✗ ssh azureuser@xx.xxx.xxx.xx
+The authenticity of host 'xx.xxx.xxx.xx (xx.xxx.xxx.xx)' can't be established.
+ED25519 key fingerprint is SHA256:41/qOH8bVtrBrJTmPoPQP2GvX5AmjnNOOXcYKcliBVg.
+This key is not known by any other names
+Are you sure you want to continue connecting (yes/no/[fingerprint])? yes
+Warning: Permanently added 'xx.xxx.xxx.xx' (ED25519) to the list of known hosts.
+Welcome to Ubuntu 22.04.3 LTS (GNU/Linux 5.15.0-1042-azure x86_64)
+
+ * Documentation:  https://help.ubuntu.com
+ * Management:     https://landscape.canonical.com
+ * Support:        https://ubuntu.com/advantage
+
+  System information as of Sun Aug 13 12:27:51 UTC 2023
+
+  System load:  0.0               Processes:             111
+  Usage of /:   6.4% of 28.89GB   Users logged in:       0
+  Memory usage: 4%                IPv4 address for eth0: 10.240.0.244
+  Swap usage:   0%
+
+Expanded Security Maintenance for Applications is not enabled.
+
+0 updates can be applied immediately.
+
+1 additional security update can be applied with ESM Apps.
+Learn more about enabling ESM Apps service at https://ubuntu.com/esm
+
+
+
+The programs included with the Ubuntu system are free software;
+the exact distribution terms for each program are described in the
+individual files in /usr/share/doc/*/copyright.
+
+Ubuntu comes with ABSOLUTELY NO WARRANTY, to the extent permitted by
+applicable law.
+
+To run a command as administrator (user "root"), use "sudo <command>".
+See "man sudo_root" for details.```
+
+azureuser@lb-vm:~$
+```
+
+#### Copy ssh private key to the load balancer
+
+```shell
+scp ../infra/id_vm azureuser@xx.xxx.xxx.xx:~/.ssh/id_rsa
+scp ../infra/id_vm.pub azureuser@xx.xxx.xxx.xx:~/.ssh/id_rsa.pub
+```
+
+```shell
+ssh azureuser@xx.xxx.xxx.xx "chmod 400 ~/.ssh/id_rsa*"
+```
+
+#### 
+
+
+### Copy to API Server load balancer
+
+#### Copy the appropriate certificates and private keys for worker instances
+
+```shell
+scp ca.pem worker-*.pem azureuser@xx.xxx.xxx.xx:~/
+```
+
+Results:
+```
+ca.pem
+worker-0-key.pem
+worker-0.pem
+worker-1-key.pem
+worker-1.pem
+worker-2-key.pem
+worker-2.pem
+```
+
+##### Copy to worker nodes
+```shell
 for instance in worker-0 worker-1 worker-2; do
-  gcloud compute scp ca.pem ${instance}-key.pem ${instance}.pem ${instance}:~/
+  scp ca.pem ${instance}-key.pem ${instance}.pem ${instance}:~/
 done
 ```
 
-Copy the appropriate certificates and private keys to each controller instance:
 
+### Copy the appropriate certificates and private keys for controller instances
+
+#### Copy to load balancer node
 ```
+scp ca.pem ca-key.pem service-account*.pem kubernetes*.pem azureuser@xx.xxx.xxx.xx:~/
+```
+
+Results:
+```
+ca.pem
+ca-key.pem
+kubernetes-key.pem
+kubernetes.pem
+```
+
+
+### Copy files to controller nodes
+```shell
+
 for instance in controller-0 controller-1 controller-2; do
-  gcloud compute scp ca.pem ca-key.pem kubernetes-key.pem kubernetes.pem \
+  scp ca.pem ca-key.pem kubernetes-key.pem kubernetes.pem \
     service-account-key.pem service-account.pem ${instance}:~/
 done
 ```

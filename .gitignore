@@ -1,3 +1,5 @@
+id_vm
+id_vm.pub
 admin-key.pem
 admin.csr                  
 admin.pem                  
@@ -45,3 +47,5 @@ service-account.pem
 **terraform.tfstate.backup
 **/terraform.tfstate
 **/local.tfvars
+/.$kubernetes-the-hard-way.drawio.bkp
+/.$kubernetes-the-hard-way.drawio.dtmp
