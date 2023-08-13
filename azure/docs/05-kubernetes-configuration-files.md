@@ -12,10 +12,10 @@ Each kubeconfig requires a Kubernetes API Server to connect to. To support high 
 
 Retrieve the `kubernetes-the-hard-way` static IP address:
 
-```
-KUBERNETES_PUBLIC_ADDRESS=$(gcloud compute addresses describe kubernetes-the-hard-way \
-  --region $(gcloud config get-value compute/region) \
-  --format 'value(address)')
+```shell
+KUBERNETES_PUBLIC_ADDRESS=$(az network public-ip show -g kthw -n kubernetes-the-hard-way --query 'ipAddress' | jq -r .)
+KUBERNETES_PRIVATE_ADDRESS="10.240.0.244"
+KUBERNETES_PRIVATE_ADDRESS=$(az network nic show -g kthw -n lb-nic --query "ipConfigurations[0].privateIPAddress" | jq -r .)
 ```
 
 ### The kubelet Kubernetes Configuration File
@@ -31,7 +31,7 @@ for instance in worker-0 worker-1 worker-2; do
   kubectl config set-cluster kubernetes-the-hard-way \
     --certificate-authority=ca.pem \
     --embed-certs=true \
-    --server=https://${KUBERNETES_PUBLIC_ADDRESS}:6443 \
+    --server=https://${KUBERNETES_PRIVATE_ADDRESS}:6443 \
     --kubeconfig=${instance}.kubeconfig
 
   kubectl config set-credentials system:node:${instance} \
@@ -66,7 +66,7 @@ Generate a kubeconfig file for the `kube-proxy` service:
   kubectl config set-cluster kubernetes-the-hard-way \
     --certificate-authority=ca.pem \
     --embed-certs=true \
-    --server=https://${KUBERNETES_PUBLIC_ADDRESS}:6443 \
+    --server=https://${KUBERNETES_PRIVATE_ADDRESS}:6443 \
     --kubeconfig=kube-proxy.kubeconfig
 
   kubectl config set-credentials system:kube-proxy \
@@ -195,19 +195,33 @@ admin.kubeconfig
 
 ## Distribute the Kubernetes Configuration Files
 
-Copy the appropriate `kubelet` and `kube-proxy` kubeconfig files to each worker instance:
+### Copy the appropriate `kubelet` and `kube-proxy` kubeconfig files to each worker instance:
+
+#### Copy to load balancer
+```shell
+scp worker-*.kubeconfig kube-proxy.kubeconfig azureuser@xx.xxx.xxx.xx:~/
 
 ```
+
+
+#### Copy to worker nodes from load balancer
+```shell
 for instance in worker-0 worker-1 worker-2; do
-  gcloud compute scp ${instance}.kubeconfig kube-proxy.kubeconfig ${instance}:~/
+  scp ${instance}.kubeconfig kube-proxy.kubeconfig ${instance}:~/
 done
 ```
 
-Copy the appropriate `kube-controller-manager` and `kube-scheduler` kubeconfig files to each controller instance:
+### Copy the appropriate `kube-controller-manager` and `kube-scheduler` kubeconfig files to each controller instance:
 
+#### Copy to load balancer
+```shell
+scp admin.kubeconfig kube-controller-manager.kubeconfig kube-scheduler.kubeconfig azureuser@xx.xxx.xxx.xx:~/
+```
+
+#### Copy to controller nodes from load balancer
 ```
 for instance in controller-0 controller-1 controller-2; do
-  gcloud compute scp admin.kubeconfig kube-controller-manager.kubeconfig kube-scheduler.kubeconfig ${instance}:~/
+  scp admin.kubeconfig kube-controller-manager.kubeconfig kube-scheduler.kubeconfig ${instance}:~/
 done
 ```
 

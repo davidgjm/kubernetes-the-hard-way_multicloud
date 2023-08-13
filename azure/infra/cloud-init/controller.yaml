@@ -2,10 +2,13 @@
 package_upgrade: true
 packages:
   - golang-cfssl
-  - [etcd-server, 3.3.25+dfsg-7ubuntu0.22.04.1]
+  - net-tools
 
 runcmd:
   - [wget, https://storage.googleapis.com/kubernetes-release/release/v1.26.0/bin/linux/amd64/kubectl]
   - chmod +x kubectl
   - sudo mv kubectl /usr/local/bin/
   - [kubectl, version, --client]
+  - [wget, https://github.com/etcd-io/etcd/releases/download/v3.5.6/etcd-v3.5.6-linux-amd64.tar.gz]
+  - tar -xvf etcd-v3.5.6-linux-amd64.tar.gz
+  - sudo mv etcd-v3.5.6-linux-amd64/etcd* /usr/local/bin/

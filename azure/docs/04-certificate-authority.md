@@ -156,7 +156,7 @@ Generate the Kubernetes API Server certificate and private key:
 ```shell
 {
 
-KUBERNETES_PUBLIC_ADDRESS=$(az network public-ip show -g kthw -n kubernetes-the-hard-way --query 'ipAddress')
+KUBERNETES_PUBLIC_ADDRESS=$(az network public-ip show -g kthw -n kubernetes-the-hard-way --query 'ipAddress' | jq -r .)
 
 KUBERNETES_HOSTNAMES=kubernetes,kubernetes.default,kubernetes.default.svc,kubernetes.default.svc.cluster,kubernetes.svc.cluster.local
 
@@ -165,7 +165,7 @@ cfssl gencert \
   -ca=ca.pem \
   -ca-key=ca-key.pem \
   -config=ca-config.json \
-  -hostname=10.32.0.1,10.240.0.10,10.240.0.11,10.240.0.12,${KUBERNETES_PUBLIC_ADDRESS},127.0.0.1,${KUBERNETES_HOSTNAMES} \
+  -hostname=10.32.0.1,10.240.0.244,10.240.0.10,10.240.0.11,10.240.0.12,${KUBERNETES_PUBLIC_ADDRESS},127.0.0.1,${KUBERNETES_HOSTNAMES} \
   -profile=kubernetes \
   kubernetes-csr.json | cfssljson -bare kubernetes
 
@@ -262,12 +262,13 @@ azureuser@lb-vm:~$
 #### Copy ssh private key to the load balancer
 
 ```shell
-scp ../infra/id_vm azureuser@xx.xxx.xxx.xx:~/.ssh/id_rsa
-scp ../infra/id_vm.pub azureuser@xx.xxx.xxx.xx:~/.ssh/id_rsa.pub
+RHOST=azureuser@xx.xxx.xxx.xx
+scp ../infra/id_vm $RHOST:~/.ssh/id_rsa
+scp ../infra/id_vm.pub $RHOST:~/.ssh/id_rsa.pub
 ```
 
 ```shell
-ssh azureuser@xx.xxx.xxx.xx "chmod 400 ~/.ssh/id_rsa*"
+ssh $RHOST "chmod 400 ~/.ssh/id_rsa*"
 ```
 
 #### 
@@ -316,7 +317,7 @@ kubernetes.pem
 ```
 
 
-### Copy files to controller nodes
+### Copy files to controller nodes from load balancer
 ```shell
 
 for instance in controller-0 controller-1 controller-2; do

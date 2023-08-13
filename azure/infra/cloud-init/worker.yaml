@@ -1,8 +1,8 @@
 #cloud-config
 package_upgrade: true
 packages:
+  - net-tools
   - golang-cfssl
-  - [etcd-server, 3.3.25+dfsg-7ubuntu0.22.04.1]
 
 runcmd:
   - [wget, https://storage.googleapis.com/kubernetes-release/release/v1.26.0/bin/linux/amd64/kubectl]

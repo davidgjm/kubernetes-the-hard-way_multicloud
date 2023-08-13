@@ -34,9 +34,14 @@ EOF
 
 Copy the `encryption-config.yaml` encryption config file to each controller instance:
 
+```shell
+scp encryption-config.yaml azureuser@xx.xxx.xxx.xx:~/
+
 ```
+
+```shell
 for instance in controller-0 controller-1 controller-2; do
-  gcloud compute scp encryption-config.yaml ${instance}:~/
+  scp encryption-config.yaml ${instance}:~/
 done
 ```
 
