@@ -8,8 +8,15 @@ variable "resource_group_name" {
   default = "kthw"
 }
 
-variable "private_domain" {
-  default = "kthw.dev"
+variable "private_dns_zone" {
+  type = object({
+    name = string
+    resource_group = string
+  })
+  default = {
+    name = "kthw.dev"
+    resource_group = "non-k8s"
+  }
 }
 
 variable "vnet_cidr" {

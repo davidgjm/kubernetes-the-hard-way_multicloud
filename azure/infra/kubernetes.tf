@@ -22,8 +22,8 @@ resource "azurerm_network_interface_security_group_association" "kubernetes_cont
 }
 
 resource "azurerm_private_dns_a_record" "kubernetes_controllers" {
-  zone_name           = azurerm_private_dns_zone.dev.name
-  resource_group_name = azurerm_resource_group.kthw.name
+  zone_name           = data.azurerm_private_dns_zone.dev.name
+  resource_group_name = data.azurerm_private_dns_zone.dev.resource_group_name
   ttl                 = 30 * 60
 
   for_each = {

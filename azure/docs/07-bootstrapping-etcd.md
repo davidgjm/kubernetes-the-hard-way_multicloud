@@ -4,10 +4,10 @@ Kubernetes components are stateless and store cluster state in [etcd](https://gi
 
 ## Prerequisites
 
-The commands in this lab must be run on each controller instance: `controller-0`, `controller-1`, and `controller-2`. Login to each controller instance using the `gcloud` command. Example:
+The commands in this lab must be run on each controller instance: `controller-0`, `controller-1`, and `controller-2`. Login to each controller instance through the load balancer virtual machine. Example:
 
 ```
-gcloud compute ssh controller-0
+ssh controller-0
 ```
 
 ### Running commands in parallel with tmux
@@ -16,39 +16,22 @@ gcloud compute ssh controller-0
 
 ## Bootstrapping an etcd Cluster Member
 
-### Download and Install the etcd Binaries
+The etcd server has already been installed through `cloud-init` in terraform.
 
-Download the official etcd release binaries from the [etcd](https://github.com/etcd-io/etcd) GitHub project:
-
-```
-wget -q --show-progress --https-only --timestamping \
-  "https://github.com/etcd-io/etcd/releases/download/v3.4.15/etcd-v3.4.15-linux-amd64.tar.gz"
-```
-
-Extract and install the `etcd` server and the `etcdctl` command line utility:
-
-```
-{
-  tar -xvf etcd-v3.4.15-linux-amd64.tar.gz
-  sudo mv etcd-v3.4.15-linux-amd64/etcd* /usr/local/bin/
-}
-```
 
 ### Configure the etcd Server
 
-```
-{
+```shell
+
   sudo mkdir -p /etc/etcd /var/lib/etcd
   sudo chmod 700 /var/lib/etcd
   sudo cp ca.pem kubernetes-key.pem kubernetes.pem /etc/etcd/
-}
 ```
 
 The instance internal IP address will be used to serve client requests and communicate with etcd cluster peers. Retrieve the internal IP address for the current compute instance:
 
 ```
-INTERNAL_IP=$(curl -s -H "Metadata-Flavor: Google" \
-  http://metadata.google.internal/computeMetadata/v1/instance/network-interfaces/0/ip)
+INTERNAL_IP=$(curl -s -H Metadata:true --noproxy "*" "http://169.254.169.254/metadata/instance/network/interface/0/ipv4/ipAddress/0?api-version=2021-02-01" | jq -r .privateIpAddress)
 ```
 
 Each etcd member must have a unique name within an etcd cluster. Set the etcd name to match the hostname of the current compute instance:
