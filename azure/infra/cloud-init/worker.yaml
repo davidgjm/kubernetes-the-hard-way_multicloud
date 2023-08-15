@@ -2,10 +2,10 @@
 package_upgrade: true
 packages:
   - net-tools
+  - socat
+  - conntrack
+  - ipset
   - jq
 
-#runcmd:
-#  - [wget, https://storage.googleapis.com/kubernetes-release/release/v1.26.0/bin/linux/amd64/kubectl]
-#  - chmod +x kubectl
-#  - sudo mv kubectl /usr/local/bin/
-#  - [kubectl, version, --client]
+runcmd:
+  - sudo swapoff -a

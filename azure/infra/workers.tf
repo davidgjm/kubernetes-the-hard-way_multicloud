@@ -1,14 +1,3 @@
-resource "azurerm_private_dns_a_record" "workers" {
-  zone_name           = data.azurerm_private_dns_zone.dev.name
-  resource_group_name = data.azurerm_private_dns_zone.dev.resource_group_name
-  ttl                 = 30 * 60
-
-  for_each = {
-    for nic in azurerm_network_interface.workers : nic.name => nic
-  }
-  name    = each.key
-  records = [each.value.ip_configuration[0].private_ip_address]
-}
 
 resource "azurerm_network_security_group" "workers" {
   location            = azurerm_resource_group.kthw.location

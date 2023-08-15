@@ -4,19 +4,6 @@ resource "azurerm_resource_group" "kthw" {
 }
 
 
-data "azurerm_private_dns_zone" "dev" {
-  name = var.private_dns_zone.name
-  resource_group_name = var.private_dns_zone.resource_group
-}
-
-resource "azurerm_private_dns_zone_virtual_network_link" "cloud_native" {
-  name                  = "cloud_native"
-  private_dns_zone_name = data.azurerm_private_dns_zone.dev.name
-  resource_group_name   = data.azurerm_private_dns_zone.dev.resource_group_name
-  virtual_network_id    = azurerm_virtual_network.kthw.id
-  registration_enabled = true
-}
-
 resource "azurerm_network_security_group" "internal" {
   location            = azurerm_resource_group.kthw.location
   name                = "internal"

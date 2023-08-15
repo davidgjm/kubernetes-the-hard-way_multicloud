@@ -35,7 +35,8 @@ EOF
 Copy the `encryption-config.yaml` encryption config file to each controller instance:
 
 ```shell
-scp encryption-config.yaml azureuser@xx.xxx.xxx.xx:~/
+RHOST=azureuser@xx.xxx.xxx.xx
+scp encryption-config.yaml $RHOST:~/
 
 ```
 

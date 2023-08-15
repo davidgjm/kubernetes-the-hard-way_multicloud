@@ -28,14 +28,14 @@ The key control plane components area already installed via `cloud-init` through
 
 ### Configure the Kubernetes API Server
 
-```
-{
-  sudo mkdir -p /var/lib/kubernetes/
+```shell
 
-  sudo mv ca.pem ca-key.pem kubernetes-key.pem kubernetes.pem \
-    service-account-key.pem service-account.pem \
-    encryption-config.yaml /var/lib/kubernetes/
-}
+#  sudo mkdir -p /var/lib/kubernetes/
+
+sudo mv ca.pem ca-key.pem kubernetes-key.pem kubernetes.pem \
+  service-account-key.pem service-account.pem \
+  encryption-config.yaml /var/lib/kubernetes/
+
 ```
 
 The instance internal IP address will be used to advertise the API Server to members of the cluster. Retrieve the internal IP address for the current compute instance:
@@ -144,7 +144,7 @@ sudo mv kube-scheduler.kubeconfig /var/lib/kubernetes/
 
 Create the `kube-scheduler.yaml` configuration file:
 
-```
+```shell
 cat <<EOF | sudo tee /etc/kubernetes/config/kube-scheduler.yaml
 apiVersion: kubescheduler.config.k8s.io/v1beta1
 kind: KubeSchedulerConfiguration
@@ -157,7 +157,7 @@ EOF
 
 Create the `kube-scheduler.service` systemd unit file:
 
-```
+```shell
 cat <<EOF | sudo tee /etc/systemd/system/kube-scheduler.service
 [Unit]
 Description=Kubernetes Scheduler
@@ -177,12 +177,12 @@ EOF
 
 ### Start the Controller Services
 
-```
-{
-  sudo systemctl daemon-reload
-  sudo systemctl enable kube-apiserver kube-controller-manager kube-scheduler
-  sudo systemctl start kube-apiserver kube-controller-manager kube-scheduler
-}
+```shell
+
+sudo systemctl daemon-reload
+sudo systemctl enable kube-apiserver kube-controller-manager kube-scheduler
+sudo systemctl start kube-apiserver kube-controller-manager kube-scheduler
+
 ```
 
 > Allow up to 10 seconds for the Kubernetes API Server to fully initialize.
@@ -193,14 +193,10 @@ A [Google Network Load Balancer](https://cloud.google.com/compute/docs/load-bala
 
 > The `/healthz` API server endpoint does not require authentication by default.
 
-Install a basic web server to handle HTTP health checks:
+Install a basic web server to handle HTTP health checks. Note, nginx is already provisioned via `cloud-init`.
 
-```
-sudo apt-get update
-sudo apt-get install -y nginx
-```
 
-```
+```shell
 cat > kubernetes.default.svc.cluster.local <<EOF
 server {
   listen      80;
@@ -214,13 +210,13 @@ server {
 EOF
 ```
 
-```
-{
-  sudo mv kubernetes.default.svc.cluster.local \
-    /etc/nginx/sites-available/kubernetes.default.svc.cluster.local
+```shell
 
-  sudo ln -s /etc/nginx/sites-available/kubernetes.default.svc.cluster.local /etc/nginx/sites-enabled/
-}
+sudo mv kubernetes.default.svc.cluster.local \
+  /etc/nginx/sites-available/kubernetes.default.svc.cluster.local
+
+sudo ln -s /etc/nginx/sites-available/kubernetes.default.svc.cluster.local /etc/nginx/sites-enabled/
+
 ```
 
 ```
@@ -278,7 +274,7 @@ ssh controller-0
 
 Create the `system:kube-apiserver-to-kubelet` [ClusterRole](https://kubernetes.io/docs/admin/authorization/rbac/#role-and-clusterrole) with permissions to access the Kubelet API and perform most common tasks associated with managing pods:
 
-```
+```shell
 cat <<EOF | kubectl apply --kubeconfig admin.kubeconfig -f -
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
@@ -306,7 +302,7 @@ The Kubernetes API Server authenticates to the Kubelet as the `kubernetes` user 
 
 Bind the `system:kube-apiserver-to-kubelet` ClusterRole to the `kubernetes` user:
 
-```
+```shell
 cat <<EOF | kubectl apply --kubeconfig admin.kubeconfig -f -
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRoleBinding
@@ -332,7 +328,7 @@ In this section you will provision an external load balancer to front the Kubern
 
 ### Use `nginx` as TCP load balancer
 
-```
+```nginx configuration
 stream {
     upstream stream_backend {
         server controller-0:6443;
@@ -345,6 +341,11 @@ stream {
         proxy_pass stream_backend;
     }
 }
+```
+
+```shell
+sudo systemctl start nginx
+sudo systemctl enable nginx
 ```
 
 

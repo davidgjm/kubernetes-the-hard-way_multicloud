@@ -173,7 +173,7 @@ cfssl gencert \
 ```
 
 ```shell
-# ../certs/generate-api-server-certs.sh
+# ../certs/0-generate-api-server-certs.sh
 ```
 
 > The Kubernetes API server is automatically assigned the `kubernetes` internal dns name, which will be linked to the first IP address (`10.32.0.1`) from the address range (`10.32.0.0/24`) reserved for internal cluster services during the [control plane bootstrapping](08-bootstrapping-kubernetes-controllers.md#configure-the-kubernetes-api-server) lab.
@@ -279,7 +279,7 @@ ssh $RHOST "chmod 400 ~/.ssh/id_rsa*"
 #### Copy the appropriate certificates and private keys for worker instances
 
 ```shell
-scp ca.pem worker-*.pem azureuser@xx.xxx.xxx.xx:~/
+scp ca.pem worker-*.pem $RHOST:~/
 ```
 
 Results:
@@ -304,8 +304,9 @@ done
 ### Copy the appropriate certificates and private keys for controller instances
 
 #### Copy to load balancer node
-```
-scp ca.pem ca-key.pem service-account*.pem kubernetes*.pem azureuser@xx.xxx.xxx.xx:~/
+
+```shell
+scp ca.pem ca-key.pem service-account*.pem kubernetes*.pem $RHOST:~/
 ```
 
 Results:

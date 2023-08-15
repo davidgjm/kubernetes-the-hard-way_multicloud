@@ -199,7 +199,8 @@ admin.kubeconfig
 
 #### Copy to load balancer
 ```shell
-scp worker-*.kubeconfig kube-proxy.kubeconfig azureuser@xx.xxx.xxx.xx:~/
+RHOST=azureuser@xx.xxx.xxx.xx
+scp worker-*.kubeconfig kube-proxy.kubeconfig $RHOST:~/
 
 ```
 
@@ -215,7 +216,8 @@ done
 
 #### Copy to load balancer
 ```shell
-scp admin.kubeconfig kube-controller-manager.kubeconfig kube-scheduler.kubeconfig azureuser@xx.xxx.xxx.xx:~/
+RHOST=azureuser@xx.xxx.xxx.xx
+scp admin.kubeconfig kube-controller-manager.kubeconfig kube-scheduler.kubeconfig $RHOST:~/
 ```
 
 #### Copy to controller nodes from load balancer

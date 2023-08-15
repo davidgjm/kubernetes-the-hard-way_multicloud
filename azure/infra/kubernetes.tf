@@ -21,17 +21,6 @@ resource "azurerm_network_interface_security_group_association" "kubernetes_cont
   network_interface_id = each.value.id
 }
 
-resource "azurerm_private_dns_a_record" "kubernetes_controllers" {
-  zone_name           = data.azurerm_private_dns_zone.dev.name
-  resource_group_name = data.azurerm_private_dns_zone.dev.resource_group_name
-  ttl                 = 30 * 60
-
-  for_each = {
-    for nic in azurerm_network_interface.kubernetes_controllers : nic.name => nic
-  }
-  name    = each.key
-  records = [each.value.ip_configuration[0].private_ip_address]
-}
 
 
 resource "azurerm_linux_virtual_machine" "controllers" {

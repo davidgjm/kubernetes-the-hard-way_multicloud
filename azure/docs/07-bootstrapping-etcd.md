@@ -23,8 +23,8 @@ The etcd server has already been installed through `cloud-init` in terraform.
 
 ```shell
 
-  sudo mkdir -p /etc/etcd /var/lib/etcd
-  sudo chmod 700 /var/lib/etcd
+#  sudo mkdir -p /etc/etcd /var/lib/etcd
+#  sudo chmod 700 /var/lib/etcd
   sudo cp ca.pem kubernetes-key.pem kubernetes.pem /etc/etcd/
 ```
 
@@ -78,12 +78,12 @@ EOF
 
 ### Start the etcd Server
 
-```
-{
-  sudo systemctl daemon-reload
-  sudo systemctl enable etcd
-  sudo systemctl start etcd
-}
+```shell
+
+sudo systemctl daemon-reload
+sudo systemctl enable etcd
+sudo systemctl start etcd
+
 ```
 
 > Remember to run the above commands on each controller node: `controller-0`, `controller-1`, and `controller-2`.

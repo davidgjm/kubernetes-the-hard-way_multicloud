@@ -89,15 +89,3 @@ resource "azurerm_linux_virtual_machine" "load_balancer" {
   }
 
 }
-
-
-
-resource "azurerm_private_dns_a_record" "load_balancer" {
-  zone_name           = data.azurerm_private_dns_zone.dev.name
-  resource_group_name = data.azurerm_private_dns_zone.dev.resource_group_name
-  ttl                 = 30 * 60
-
-  name    = azurerm_network_interface.load_balancer.name
-  records = [azurerm_network_interface.load_balancer.ip_configuration[0].private_ip_address]
-}
-
