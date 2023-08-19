@@ -35,6 +35,20 @@ resource "azurerm_network_security_rule" "dmz_ssh" {
   destination_address_prefix  = "*"
 }
 
+resource "azurerm_network_security_rule" "dmz_api_server" {
+  resource_group_name         = azurerm_resource_group.kthw.name
+  network_security_group_name = azurerm_network_security_group.dmz.name
+  name                        = "AllowApiServer"
+  protocol                    = "Tcp"
+  source_port_range           = "*"
+  destination_port_range      = "6443"
+  access                      = "Allow"
+  priority                    = 110
+  direction                   = "Inbound"
+  source_address_prefix       = "*"
+  destination_address_prefix  = "*"
+}
+
 resource "azurerm_network_interface" "load_balancer" {
   name                = format("%s-nic", var.dmz_zone.load_balancer.name)
   location            = azurerm_resource_group.kthw.location

@@ -302,7 +302,7 @@ The Kubernetes API Server authenticates to the Kubelet as the `kubernetes` user 
 
 Bind the `system:kube-apiserver-to-kubelet` ClusterRole to the `kubernetes` user:
 
-```shell
+```
 cat <<EOF | kubectl apply --kubeconfig admin.kubeconfig -f -
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRoleBinding
@@ -352,9 +352,38 @@ sudo systemctl enable nginx
 ### Verification
 
 
-Retrieve the `kubernetes-the-hard-way` static IP address:
+#### Verify within Azure vnet (use private ip)
+Retrieve NLB private IP:
+```shell
+KUBERNETES_NLB_IP_ADDRESS=$(az network nic show -g kthw -n lb-nic --query "ipConfigurations[0].privateIPAddress" | jq -r .)
 
 ```
+Make a HTTP request for the Kubernetes version info:
+
+```
+curl --cacert ca.pem https://${KUBERNETES_NLB_IP_ADDRESS}:6443/version
+```
+> output
+
+```json
+{
+  "major": "1",
+  "minor": "26",
+  "gitVersion": "v1.26.0",
+  "gitCommit": "b46a3f887ca979b1a5d14fd39cb1af43e7e5d12d",
+  "gitTreeState": "clean",
+  "buildDate": "2022-12-08T19:51:45Z",
+  "goVersion": "go1.19.4",
+  "compiler": "gc",
+  "platform": "linux/amd64"
+}
+```
+ 
+#### Verify from internet (use `NLB` public IP)
+
+Retrieve the `kubernetes-the-hard-way` static IP address:
+
+```shell
 KUBERNETES_PUBLIC_ADDRESS=$(az network public-ip show -g kthw -n kubernetes-the-hard-way --query 'ipAddress' | jq -r .)
 ```
 

@@ -4,10 +4,10 @@ In this lab you will bootstrap three Kubernetes worker nodes. The following comp
 
 ## Prerequisites
 
-The commands in this lab must be run on each worker instance: `worker-0`, `worker-1`, and `worker-2`. Login to each worker instance using the `gcloud` command. Example:
+The commands in this lab must be run on each worker instance: `worker-0`, `worker-1`, and `worker-2`. Login to each worker instance through load balancer. Example:
 
 ```
-gcloud compute ssh worker-0
+ssh worker-0
 ```
 
 ### Running commands in parallel with tmux
@@ -16,47 +16,14 @@ gcloud compute ssh worker-0
 
 ## Provisioning a Kubernetes Worker Node
 
-Install the OS dependencies:
-
-```
-{
-  sudo apt-get update
-  sudo apt-get -y install socat conntrack ipset
-}
-```
 
 > The socat binary enables support for the `kubectl port-forward` command.
 
-### Disable Swap
-
-By default the kubelet will fail to start if [swap](https://help.ubuntu.com/community/SwapFaq) is enabled. It is [recommended](https://github.com/kubernetes/kubernetes/issues/7294) that swap be disabled to ensure Kubernetes can provide proper resource allocation and quality of service.
-
-Verify if swap is enabled:
-
-```
-sudo swapon --show
-```
-
-If output is empthy then swap is not enabled. If swap is enabled run the following command to disable swap immediately:
-
-```
-sudo swapoff -a
-```
-
-> To ensure swap remains off after reboot consult your Linux distro documentation.
 
 ### Download and Install Worker Binaries
 
-```
-wget -q --show-progress --https-only --timestamping \
-  https://github.com/kubernetes-sigs/cri-tools/releases/download/v1.21.0/crictl-v1.21.0-linux-amd64.tar.gz \
-  https://github.com/opencontainers/runc/releases/download/v1.0.0-rc93/runc.amd64 \
-  https://github.com/containernetworking/plugins/releases/download/v0.9.1/cni-plugins-linux-amd64-v0.9.1.tgz \
-  https://github.com/containerd/containerd/releases/download/v1.4.4/containerd-1.4.4-linux-amd64.tar.gz \
-  https://storage.googleapis.com/kubernetes-release/release/v1.21.0/bin/linux/amd64/kubectl \
-  https://storage.googleapis.com/kubernetes-release/release/v1.21.0/bin/linux/amd64/kube-proxy \
-  https://storage.googleapis.com/kubernetes-release/release/v1.21.0/bin/linux/amd64/kubelet
-```
+> The binaries are already downloaded through `cloud-init` script.
+ 
 
 Create the installation directories:
 
@@ -99,7 +66,7 @@ Create the `bridge` network configuration file:
 ```
 cat <<EOF | sudo tee /etc/cni/net.d/10-bridge.conf
 {
-    "cniVersion": "0.4.0",
+    "cniVersion": "1.1.0",
     "name": "bridge",
     "type": "bridge",
     "bridge": "cnio0",
@@ -121,7 +88,7 @@ Create the `loopback` network configuration file:
 ```
 cat <<EOF | sudo tee /etc/cni/net.d/99-loopback.conf
 {
-    "cniVersion": "0.4.0",
+    "cniVersion": "1.1.0",
     "name": "lo",
     "type": "loopback"
 }
@@ -176,12 +143,12 @@ EOF
 
 ### Configure the Kubelet
 
-```
-{
-  sudo mv ${HOSTNAME}-key.pem ${HOSTNAME}.pem /var/lib/kubelet/
-  sudo mv ${HOSTNAME}.kubeconfig /var/lib/kubelet/kubeconfig
-  sudo mv ca.pem /var/lib/kubernetes/
-}
+```shell
+
+sudo mv ${HOSTNAME}-key.pem ${HOSTNAME}.pem /var/lib/kubelet/
+sudo mv ${HOSTNAME}.kubeconfig /var/lib/kubelet/kubeconfig
+sudo mv ca.pem /var/lib/kubernetes/
+
 ```
 
 Create the `kubelet-config.yaml` configuration file:
@@ -202,7 +169,6 @@ authorization:
 clusterDomain: "cluster.local"
 clusterDNS:
   - "10.32.0.10"
-podCIDR: "${POD_CIDR}"
 resolvConf: "/run/systemd/resolve/resolv.conf"
 runtimeRequestTimeout: "15m"
 tlsCertFile: "/var/lib/kubelet/${HOSTNAME}.pem"
@@ -227,9 +193,7 @@ ExecStart=/usr/local/bin/kubelet \\
   --config=/var/lib/kubelet/kubelet-config.yaml \\
   --container-runtime=remote \\
   --container-runtime-endpoint=unix:///var/run/containerd/containerd.sock \\
-  --image-pull-progress-deadline=2m \\
   --kubeconfig=/var/lib/kubelet/kubeconfig \\
-  --network-plugin=cni \\
   --register-node=true \\
   --v=2
 Restart=on-failure
@@ -297,8 +261,7 @@ EOF
 List the registered Kubernetes nodes:
 
 ```
-gcloud compute ssh controller-0 \
-  --command "kubectl get nodes --kubeconfig admin.kubeconfig"
+az vm run-command invoke -g kthw -n controller-0 --command-id RunShellScript --scripts "kubectl get nodes --kubeconfig admin.kubeconfig"
 ```
 
 > output
