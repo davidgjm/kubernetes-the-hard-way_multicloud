@@ -3,11 +3,12 @@ package_upgrade: true
 packages:
   - net-tools
   - socat
-#  - conntrack
+  - conntrack
   - ipset
   - jq
 
 runcmd:
+  - echo "net.ipv4.conf.all.forwarding=1" | sudo tee -a /etc/sysctl.conf
   - curl -sL https://aka.ms/InstallAzureCLIDeb | sudo bash
   - sudo swapoff -a
   - [wget, https://storage.googleapis.com/kubernetes-release/release/v1.26.0/bin/linux/amd64/kubectl]
@@ -18,6 +19,7 @@ runcmd:
   - [wget, https://github.com/containernetworking/plugins/releases/download/v1.1.0/cni-plugins-linux-amd64-v1.1.0.tgz]
   - [wget, https://github.com/containerd/containerd/releases/download/v1.6.4/containerd-1.6.4-linux-amd64.tar.gz]
   - sudo mkdir -p /etc/cni/net.d /opt/cni/bin /var/lib/kubelet /var/lib/kube-proxy /var/lib/kubernetes /var/run/kubernetes
+  - sudo mkdir -p /etc/containerd/
   - mkdir containerd
   - tar -xvf crictl-v1.26.0-linux-amd64.tar.gz
   - tar -xvf containerd-1.6.4-linux-amd64.tar.gz -C containerd

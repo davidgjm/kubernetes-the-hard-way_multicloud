@@ -16,11 +16,6 @@ ssh controller-0
 
 ## Provision the Kubernetes Control Plane
 
-Create the Kubernetes configuration directory:
-
-```
-sudo mkdir -p /etc/kubernetes/config
-```
 
 ### Download and Install the Kubernetes Controller Binaries
 
@@ -46,8 +41,15 @@ INTERNAL_IP=$(curl -s -H Metadata:true --noproxy "*" "http://169.254.169.254/met
 
 
 ```
-KUBERNETES_PUBLIC_ADDRESS=$(az network public-ip show -g kthw -n kubernetes-the-hard-way --query 'ipAddress' | jq -r .)
+FRONTEND_LOAD_BALANCER_IP=10.240.0.244
 ```
+
+To find your own private IP of the load balancer, run the following from your laptop:
+
+```shell
+az network nic show -g kthw -n lb-nic --query "ipConfigurations[0].privateIPAddress" | jq -r .
+```
+
 
 Create the `kube-apiserver.service` systemd unit file:
 
@@ -82,7 +84,7 @@ ExecStart=/usr/local/bin/kube-apiserver \\
   --runtime-config='api/all=true' \\
   --service-account-key-file=/var/lib/kubernetes/service-account.pem \\
   --service-account-signing-key-file=/var/lib/kubernetes/service-account-key.pem \\
-  --service-account-issuer=https://${KUBERNETES_PUBLIC_ADDRESS}:6443 \\
+  --service-account-issuer=https://${FRONTEND_LOAD_BALANCER_IP}:6443 \\
   --service-cluster-ip-range=10.32.0.0/24 \\
   --service-node-port-range=30000-32767 \\
   --tls-cert-file=/var/lib/kubernetes/kubernetes.pem \\

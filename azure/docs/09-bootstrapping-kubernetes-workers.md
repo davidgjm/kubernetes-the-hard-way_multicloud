@@ -25,18 +25,6 @@ ssh worker-0
 > The binaries are already downloaded through `cloud-init` script.
  
 
-Create the installation directories:
-
-```
-sudo mkdir -p \
-  /etc/cni/net.d \
-  /opt/cni/bin \
-  /var/lib/kubelet \
-  /var/lib/kube-proxy \
-  /var/lib/kubernetes \
-  /var/run/kubernetes
-```
-
 Install the worker binaries:
 
 ```
@@ -100,10 +88,6 @@ EOF
 Create the `containerd` configuration file:
 
 ```
-sudo mkdir -p /etc/containerd/
-```
-
-```
 cat << EOF | sudo tee /etc/containerd/config.toml
 [plugins]
   [plugins.cri.containerd]
@@ -117,7 +101,7 @@ EOF
 
 Create the `containerd.service` systemd unit file:
 
-```
+```shell
 cat <<EOF | sudo tee /etc/systemd/system/containerd.service
 [Unit]
 Description=containerd container runtime
@@ -138,6 +122,17 @@ LimitCORE=infinity
 
 [Install]
 WantedBy=multi-user.target
+EOF
+```
+
+```shell
+cat <<EOF | sudo tee /etc/crictl.yaml
+runtime-endpoint: "unix:///run/containerd/containerd.sock"
+image-endpoint: "unix:///run/containerd/containerd.sock"
+timeout: 2
+debug: true
+pull-image-on-create: false
+disable-pull-on-run: false
 EOF
 ```
 
