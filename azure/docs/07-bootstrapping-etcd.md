@@ -30,19 +30,22 @@ The etcd server has already been installed through `cloud-init` in terraform.
 
 The instance internal IP address will be used to serve client requests and communicate with etcd cluster peers. Retrieve the internal IP address for the current compute instance:
 
-```
+```shell
 INTERNAL_IP=$(curl -s -H Metadata:true --noproxy "*" "http://169.254.169.254/metadata/instance/network/interface/0/ipv4/ipAddress/0?api-version=2021-02-01" | jq -r .privateIpAddress)
 ```
 
 Each etcd member must have a unique name within an etcd cluster. Set the etcd name to match the hostname of the current compute instance:
 
-```
+```shell
 ETCD_NAME=$(hostname -s)
+CONTROLLER_0=10.240.0.10
+CONTROLLER_1=10.240.0.11
+CONTROLLER_2=10.240.0.12
 ```
 
 Create the `etcd.service` systemd unit file:
 
-```
+```shell
 cat <<EOF | sudo tee /etc/systemd/system/etcd.service
 [Unit]
 Description=etcd
@@ -52,22 +55,24 @@ Documentation=https://github.com/coreos
 Type=notify
 ExecStart=/usr/local/bin/etcd \\
   --name ${ETCD_NAME} \\
-  --cert-file=/etc/etcd/kubernetes.pem \\
-  --key-file=/etc/etcd/kubernetes-key.pem \\
-  --peer-cert-file=/etc/etcd/kubernetes.pem \\
-  --peer-key-file=/etc/etcd/kubernetes-key.pem \\
-  --trusted-ca-file=/etc/etcd/ca.pem \\
-  --peer-trusted-ca-file=/etc/etcd/ca.pem \\
-  --peer-client-cert-auth \\
-  --client-cert-auth \\
   --initial-advertise-peer-urls https://${INTERNAL_IP}:2380 \\
   --listen-peer-urls https://${INTERNAL_IP}:2380 \\
   --listen-client-urls https://${INTERNAL_IP}:2379,https://127.0.0.1:2379 \\
   --advertise-client-urls https://${INTERNAL_IP}:2379 \\
   --initial-cluster-token etcd-cluster-0 \\
-  --initial-cluster controller-0=https://10.240.0.10:2380,controller-1=https://10.240.0.11:2380,controller-2=https://10.240.0.12:2380 \\
+  --initial-cluster controller-0=https://${CONTROLLER_0}:2380,controller-1=https://${CONTROLLER_1}:2380,controller-2=https://${CONTROLLER_2}:2380 \\
   --initial-cluster-state new \\
+  --client-cert-auth \\
+  --trusted-ca-file=/etc/etcd/ca.pem \\
+  --cert-file=/etc/etcd/kubernetes.pem \\
+  --key-file=/etc/etcd/kubernetes-key.pem \\
+  --peer-client-cert-auth \\
+  --peer-trusted-ca-file=/etc/etcd/ca.pem \\
+  --peer-cert-file=/etc/etcd/kubernetes.pem \\
+  --peer-key-file=/etc/etcd/kubernetes-key.pem \\
   --data-dir=/var/lib/etcd
+  
+  
 Restart=on-failure
 RestartSec=5
 
@@ -79,10 +84,11 @@ EOF
 ### Start the etcd Server
 
 ```shell
-
-sudo systemctl daemon-reload
-sudo systemctl enable etcd
-sudo systemctl start etcd
+{
+  sudo systemctl daemon-reload
+  sudo systemctl enable etcd
+  sudo systemctl start etcd
+}
 
 ```
 
@@ -93,19 +99,46 @@ sudo systemctl start etcd
 List the etcd cluster members:
 
 ```
-sudo ETCDCTL_API=3 etcdctl member list \
+sudo etcdctl member list \
   --endpoints=https://127.0.0.1:2379 \
   --cacert=/etc/etcd/ca.pem \
   --cert=/etc/etcd/kubernetes.pem \
-  --key=/etc/etcd/kubernetes-key.pem
+  --key=/etc/etcd/kubernetes-key.pem \
+  -w table
 ```
 
 > output
 
 ```
-3a57933972cb5131, started, controller-2, https://10.240.0.12:2380, https://10.240.0.12:2379, false
-f98dc20bce6225a0, started, controller-0, https://10.240.0.10:2380, https://10.240.0.10:2379, false
-ffed16798470cab5, started, controller-1, https://10.240.0.11:2380, https://10.240.0.11:2379, false
++------------------+---------+--------------+--------------------------+--------------------------+------------+
+|        ID        | STATUS  |     NAME     |        PEER ADDRS        |       CLIENT ADDRS       | IS LEARNER |
++------------------+---------+--------------+--------------------------+--------------------------+------------+
+| 3a57933972cb5131 | started | controller-2 | https://10.240.0.12:2380 | https://10.240.0.12:2379 |      false |
+| f98dc20bce6225a0 | started | controller-0 | https://10.240.0.10:2380 | https://10.240.0.10:2379 |      false |
+| ffed16798470cab5 | started | controller-1 | https://10.240.0.11:2380 | https://10.240.0.11:2379 |      false |
++------------------+---------+--------------+--------------------------+--------------------------+------------+
+```
+
+### Check endpoint status
+```shell
+sudo etcdctl endpoint status \
+  --endpoints=https://10.240.0.10:2379,https://10.240.0.11:2379,https://10.240.0.12:2379 \
+  --cacert=/etc/etcd/ca.pem \
+  --cert=/etc/etcd/kubernetes.pem \
+  --key=/etc/etcd/kubernetes-key.pem \
+  -w table
+```
+
+> output
+
+```
++--------------------------+------------------+---------+---------+-----------+------------+-----------+------------+--------------------+--------+
+|         ENDPOINT         |        ID        | VERSION | DB SIZE | IS LEADER | IS LEARNER | RAFT TERM | RAFT INDEX | RAFT APPLIED INDEX | ERRORS |
++--------------------------+------------------+---------+---------+-----------+------------+-----------+------------+--------------------+--------+
+| https://10.240.0.10:2379 | f98dc20bce6225a0 |   3.5.6 |   20 kB |      true |      false |         2 |          9 |                  9 |        |
+| https://10.240.0.11:2379 | ffed16798470cab5 |   3.5.6 |   20 kB |     false |      false |         2 |          9 |                  9 |        |
+| https://10.240.0.12:2379 | 3a57933972cb5131 |   3.5.6 |   20 kB |     false |      false |         2 |          9 |                  9 |        |
++--------------------------+------------------+---------+---------+-----------+------------+-----------+------------+--------------------+--------+
 ```
 
 Next: [Bootstrapping the Kubernetes Control Plane](08-bootstrapping-kubernetes-controllers.md)

@@ -21,6 +21,10 @@ scp ../etc/$nlb_config $RHOST:~/
 ssh $RHOST "sudo cp -f $nlb_config /etc/nginx/nginx.conf"
 
 
+echo "Uploading quick setup files..."
+echo -e "\n"
+scp 3-*.sh $RHOST:~/
+
 echo "=================================================================================================================="
 echo "Uploading certificates, keys and config files for controller nodes"
 echo "=================================================================================================================="

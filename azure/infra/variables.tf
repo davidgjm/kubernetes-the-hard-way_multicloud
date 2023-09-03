@@ -43,7 +43,7 @@ variable "dmz_zone" {
   default = {
     cidr          = "10.240.0.240/28"
     load_balancer = {
-      name       = "lb"
+      name       = "lb-api-server"
       private_ip = "10.240.0.244" //the first 4 ips and last ip are reserved.
       public_ip  = {
         name = "kubernetes-the-hard-way"

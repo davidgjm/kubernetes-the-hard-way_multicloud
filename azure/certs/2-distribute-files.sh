@@ -10,6 +10,10 @@ echo -e "\n"
 for instance in controller-0 controller-1 controller-2; do
   echo "Copy certificates and keys..."
   scp ca.pem ca-key.pem kubernetes-key.pem kubernetes.pem service-account-key.pem service-account.pem ${instance}:~/
+
+  echo "Copy quick setup script"
+  scp 3-setup-etcd.sh 3-setup-controller.sh ${instance}:~/
+  echo -e "\n"
   echo "Copy encryption-config.yaml"
   scp encryption-config.yaml ${instance}:~/
   echo -e "\n"
@@ -25,6 +29,9 @@ echo -e "\n"
 for instance in worker-0 worker-1 worker-2; do
   echo "Copy client certificates"
   scp ca.pem ${instance}-key.pem ${instance}.pem ${instance}:~/
+
+  echo "Copy worker setup script"
+  scp 3-setup-worker.sh ${instance}:~/
 
   echo "Copy kubelet and kube-proxy config files"
   scp ${instance}.kubeconfig kube-proxy.kubeconfig ${instance}:~/

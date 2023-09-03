@@ -1,3 +1,30 @@
+resource "azurerm_subnet" "control_plane" {
+  name                 = "control-plane"
+  resource_group_name  = azurerm_resource_group.kthw.name
+  virtual_network_name = azurerm_virtual_network.kthw.name
+  address_prefixes     = [var.control_plane_cidr]
+}
+
+# This subnet holds both control plane nodes and worker nodes
+resource "azurerm_subnet" "kubernetes" {
+  name                 = var.kubernetes.name
+  resource_group_name  = azurerm_resource_group.kthw.name
+  virtual_network_name = azurerm_virtual_network.kthw.name
+  address_prefixes     = [var.kubernetes.cidr]
+}
+
+
+resource "azurerm_network_security_group" "internal" {
+  location            = azurerm_resource_group.kthw.location
+  name                = "internal"
+  resource_group_name = azurerm_resource_group.kthw.name
+}
+
+resource "azurerm_subnet_network_security_group_association" "kubernetes" {
+  network_security_group_id = azurerm_network_security_group.internal.id
+  subnet_id                 = azurerm_subnet.kubernetes.id
+}
+
 resource "azurerm_network_interface" "kubernetes_controllers" {
   count               = 3
   name                = format("controller-%d", count.index)
@@ -7,20 +34,11 @@ resource "azurerm_network_interface" "kubernetes_controllers" {
 
   ip_configuration {
     name                          = format("controller-%d", count.index)
-    subnet_id                     = azurerm_subnet.k8s.id
+    subnet_id                     = azurerm_subnet.kubernetes.id
     private_ip_address_allocation = "Static"
     private_ip_address            = cidrhost(var.kubernetes.cidr, 10 + count.index)
   }
 }
-
-resource "azurerm_network_interface_security_group_association" "kubernetes_controllers" {
-  network_security_group_id = azurerm_network_security_group.internal.id
-  for_each                  = {
-    for nic in azurerm_network_interface.kubernetes_controllers : nic.name => nic
-  }
-  network_interface_id = each.value.id
-}
-
 
 
 resource "azurerm_linux_virtual_machine" "controllers" {
@@ -42,7 +60,7 @@ resource "azurerm_linux_virtual_machine" "controllers" {
     public_key = file(var.vm_instance.ssh_key.vm_public_key)
   }
 
-  custom_data = base64encode(file("cloud-init/controller.yaml"))
+  custom_data = base64encode(file("cloud-init/controller-amd64.yaml"))
 
   eviction_policy = "Delete"
   priority        = "Spot"

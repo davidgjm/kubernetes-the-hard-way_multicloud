@@ -1,3 +1,10 @@
+resource "azurerm_subnet" "workers" {
+  name                 = var.workers.name
+  address_prefixes     = [var.workers.cidr]
+  resource_group_name  = azurerm_resource_group.kthw.name
+  virtual_network_name = azurerm_virtual_network.kthw.name
+}
+
 
 resource "azurerm_network_security_group" "workers" {
   location            = azurerm_resource_group.kthw.location
@@ -19,12 +26,14 @@ resource "azurerm_network_security_rule" "allow_control_plane" {
   direction                   = "Inbound"
 }
 
-resource "azurerm_network_interface_security_group_association" "workers" {
+resource "azurerm_subnet_network_security_group_association" "workers" {
   network_security_group_id = azurerm_network_security_group.workers.id
-  for_each                  = {
-    for nic in azurerm_network_interface.workers : nic.name => nic
-  }
-  network_interface_id = each.value.id
+  subnet_id            =  azurerm_subnet.workers.id
+}
+
+resource "azurerm_subnet_network_security_group_association" "shared_subnet_workers" {
+  network_security_group_id = azurerm_network_security_group.workers.id
+  subnet_id            =  azurerm_subnet.kubernetes.id
 }
 
 
@@ -37,7 +46,7 @@ resource "azurerm_network_interface" "workers" {
 
   ip_configuration {
     name                          = format("worker-%d", count.index)
-    subnet_id                     = azurerm_subnet.k8s.id
+    subnet_id                     = azurerm_subnet.kubernetes.id
     private_ip_address_allocation = "Static"
     private_ip_address            = cidrhost(var.kubernetes.cidr, 20 + count.index)
   }
@@ -63,7 +72,7 @@ resource "azurerm_linux_virtual_machine" "workers" {
     public_key = file(var.vm_instance.ssh_key.vm_public_key)
   }
 
-  custom_data = base64encode(file("cloud-init/worker.yaml"))
+  custom_data = base64encode(file("cloud-init/worker-amd64.yaml"))
 
   eviction_policy = "Delete"
   priority        = "Spot"
