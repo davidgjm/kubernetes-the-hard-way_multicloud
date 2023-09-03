@@ -18,6 +18,9 @@ for instance in controller-0 controller-1 controller-2; do
   scp encryption-config.yaml ${instance}:~/
   echo -e "\n"
   scp admin.kubeconfig kube-controller-manager.kubeconfig kube-scheduler.kubeconfig ${instance}:~/
+
+  echo "copy controller config files"
+  scp ~/controller-config-files/* ${instance}:~/
 done
 
 
@@ -35,4 +38,8 @@ for instance in worker-0 worker-1 worker-2; do
 
   echo "Copy kubelet and kube-proxy config files"
   scp ${instance}.kubeconfig kube-proxy.kubeconfig ${instance}:~/
+
+  echo -e "\n"
+  echo "Copy worker config files"
+  scp ~/worker-config-files/* ${instance}:~/
 done

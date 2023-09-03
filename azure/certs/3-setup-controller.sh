@@ -83,32 +83,11 @@ WantedBy=multi-user.target
 EOF
 
 sudo mv kube-scheduler.kubeconfig /var/lib/kubernetes/
+sudo mv kube-scheduler.yaml /etc/kubernetes/config/kube-scheduler.yaml
+sudo mv kube-scheduler.service /etc/systemd/system/kube-scheduler.service
+echo -e "\n"
 
-cat <<EOF | sudo tee /etc/kubernetes/config/kube-scheduler.yaml
-apiVersion: kubescheduler.config.k8s.io/v1
-kind: KubeSchedulerConfiguration
-clientConnection:
-  kubeconfig: "/var/lib/kubernetes/kube-scheduler.kubeconfig"
-leaderElection:
-  leaderElect: true
-EOF
-
-cat <<EOF | sudo tee /etc/systemd/system/kube-scheduler.service
-[Unit]
-Description=Kubernetes Scheduler
-Documentation=https://github.com/kubernetes/kubernetes
-
-[Service]
-ExecStart=/usr/local/bin/kube-scheduler \\
-  --config=/etc/kubernetes/config/kube-scheduler.yaml \\
-  --v=2
-Restart=on-failure
-RestartSec=5
-
-[Install]
-WantedBy=multi-user.target
-EOF
-
+echo "Setting up systemd services..."
 {
   sudo systemctl daemon-reload
   sudo systemctl enable kube-apiserver kube-controller-manager kube-scheduler

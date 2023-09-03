@@ -38,9 +38,12 @@ scp admin.kubeconfig kube-controller-manager.kubeconfig kube-scheduler.kubeconfi
 
 echo "Uploading encryption-config.yaml for controller nodes..."
 scp encryption-config.yaml $RHOST:~/
-
-
 echo -e "\n"
+
+echo "Uploading controller config files..."
+scp ../etc/controller/* $RHOST:~/controller-config-files
+echo -e "\n"
+
 echo "=================================================================================================================="
 echo "Uploading certificates, keys and config files for worker nodes"
 echo "=================================================================================================================="
@@ -50,3 +53,7 @@ scp ca.pem worker-*.pem $RHOST:~/
 
 echo "Uploading kubelet and kube-proxy kubeconfig files..."
 scp worker-*.kubeconfig kube-proxy.kubeconfig $RHOST:~/
+
+echo -e "\n"
+echo "Uploading configuration files for worker nodes..."
+scp ../etc/worker/* $RHOST:~/worker-config-files

@@ -1,33 +1,14 @@
 #!/usr/bin/env bash
 
-echo Configure containerd
-
-
-
-cat <<EOF | sudo tee /etc/systemd/system/containerd.service
-[Unit]
-Description=containerd container runtime
-Documentation=https://containerd.io
-After=network.target
-
-[Service]
-ExecStartPre=/sbin/modprobe overlay
-ExecStart=/bin/containerd
-Restart=always
-RestartSec=5
-Delegate=yes
-KillMode=process
-OOMScoreAdjust=-999
-LimitNOFILE=1048576
-LimitNPROC=infinity
-LimitCORE=infinity
-
-[Install]
-WantedBy=multi-user.target
-EOF
+echo Configure CNI networking
+sudo cp 99-loopback.conf /etc/cni/net.d/99-loopback.conf
 echo -e "\n"
 
-
+echo Configure containerd
+sudo cp containerd-config.toml /etc/containerd/config.toml
+sudo cp containerd.service /etc/systemd/system/containerd.service
+sudo cp crictl.yaml /etc/crictl.yaml
+echo -e "\n"
 
 echo Configure the Kubelet
 sudo mv ${HOSTNAME}-key.pem ${HOSTNAME}.pem /var/lib/kubelet/
@@ -55,61 +36,21 @@ tlsCertFile: "/var/lib/kubelet/${HOSTNAME}.pem"
 tlsPrivateKeyFile: "/var/lib/kubelet/${HOSTNAME}-key.pem"
 EOF
 
-cat <<EOF | sudo tee /etc/systemd/system/kubelet.service
-[Unit]
-Description=Kubernetes Kubelet
-Documentation=https://github.com/kubernetes/kubernetes
-After=containerd.service
-Requires=containerd.service
-
-[Service]
-ExecStart=/usr/local/bin/kubelet \\
-  --config=/var/lib/kubelet/kubelet-config.yaml \\
-  --container-runtime=remote \\
-  --container-runtime-endpoint=unix:///var/run/containerd/containerd.sock \\
-  --kubeconfig=/var/lib/kubelet/kubeconfig \\
-  --register-node=true \\
-  --v=2
-Restart=on-failure
-RestartSec=5
-
-[Install]
-WantedBy=multi-user.target
-EOF
+sudo cp kubelet.service /etc/systemd/system/kubelet.service
+echo -e "\n"
 
 echo Configure the Kubernetes Proxy
 sudo mv kube-proxy.kubeconfig /var/lib/kube-proxy/kubeconfig
+sudo cp kube-proxy-config.yaml /var/lib/kube-proxy/kube-proxy-config.yaml
+sudo cp kube-proxy.service /etc/systemd/system/kube-proxy.service
+echo -e "\n"
 
-cat <<EOF | sudo tee /var/lib/kube-proxy/kube-proxy-config.yaml
-kind: KubeProxyConfiguration
-apiVersion: kubeproxy.config.k8s.io/v1alpha1
-clientConnection:
-  kubeconfig: "/var/lib/kube-proxy/kubeconfig"
-mode: "iptables"
-clusterCIDR: "10.200.0.0/16"
-EOF
-
-cat <<EOF | sudo tee /etc/systemd/system/kube-proxy.service
-[Unit]
-Description=Kubernetes Kube Proxy
-Documentation=https://github.com/kubernetes/kubernetes
-
-[Service]
-ExecStart=/usr/local/bin/kube-proxy \\
-  --config=/var/lib/kube-proxy/kube-proxy-config.yaml
-Restart=on-failure
-RestartSec=5
-
-[Install]
-WantedBy=multi-user.target
-EOF
-
+echo Setting up systemctl unit services...
 {
   sudo systemctl daemon-reload
   sudo systemctl enable containerd kubelet kube-proxy
   sudo systemctl start containerd kubelet kube-proxy
 }
-echo -e "\n"
 echo -e "\n"
 echo -e "\n"
 echo -e "\n"

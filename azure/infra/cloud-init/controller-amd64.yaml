@@ -13,9 +13,9 @@ runcmd:
   - sudo mkdir -p /etc/etcd /var/lib/etcd
   - sudo chmod 700 /var/lib/etcd
   - wget https://dl.k8s.io/v1.26.0/bin/linux/amd64/kubectl
-  - [wget, https://dl.k8s.io/v1.26.0/bin/linux/amd64/kube-apiserver]
-  - [wget, https://dl.k8s.io/v1.26.0/bin/linux/amd64/kube-controller-manager]
-  - [wget, https://dl.k8s.io/v1.26.0/bin/linux/amd64/kube-scheduler]
+  - wget https://dl.k8s.io/v1.26.0/bin/linux/amd64/kube-apiserver
+  - wget https://dl.k8s.io/v1.26.0/bin/linux/amd64/kube-controller-manager
+  - wget https://dl.k8s.io/v1.26.0/bin/linux/amd64/kube-scheduler
   - chmod +x kube-apiserver kube-controller-manager kube-scheduler kubectl
   - sudo mv kube-apiserver kube-controller-manager kube-scheduler kubectl /usr/local/bin/
   - [kubectl, version, --client]

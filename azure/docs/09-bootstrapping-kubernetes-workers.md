@@ -25,21 +25,6 @@ ssh worker-0
 > The binaries are already downloaded through `cloud-init` script.
  
 
-Install the worker binaries:
-
-```
-{
-  mkdir containerd
-  tar -xvf crictl-v1.21.0-linux-amd64.tar.gz
-  tar -xvf containerd-1.4.4-linux-amd64.tar.gz -C containerd
-  sudo tar -xvf cni-plugins-linux-amd64-v0.9.1.tgz -C /opt/cni/bin/
-  sudo mv runc.amd64 runc
-  chmod +x crictl kubectl kube-proxy kubelet runc 
-  sudo mv crictl kubectl kube-proxy kubelet runc /usr/local/bin/
-  sudo mv containerd/bin/* /bin/
-}
-```
-
 ### Configure CNI Networking
 
 Retrieve the Pod CIDR range for the current compute instance:
@@ -72,79 +57,32 @@ EOF
 ```
 
 Create the `loopback` network configuration file:
-
-```
-cat <<EOF | sudo tee /etc/cni/net.d/99-loopback.conf
-{
-    "cniVersion": "1.1.0",
-    "name": "lo",
-    "type": "loopback"
-}
-EOF
+```shell
+sudo cp 99-loopback.conf /etc/cni/net.d/99-loopback.conf
 ```
 
 ### Configure containerd
 
-Create the `containerd` configuration file:
+#### Create the `containerd` configuration file:
 
+Copy the configuration file from home directory
 ```shell
-cat << EOF | sudo tee /etc/containerd/config.toml
-version = 2
-[plugins]
-  [plugins."io.containerd.grpc.v1.cri"]
-    [plugins."io.containerd.grpc.v1.cri".containerd]
-      snapshotter = "overlayfs"
-      [plugins."io.containerd.grpc.v1.cri".containerd.default_runtime]
-        runtime_type = "io.containerd.runc.v2"
-      [plugins."io.containerd.grpc.v1.cri".containerd.runtimes]
-        [plugins."io.containerd.grpc.v1.cri".containerd.runtimes.runc]
-          runtime_type = "io.containerd.runc.v2"
-          [plugins."io.containerd.grpc.v1.cri".containerd.runtimes.runc.options]
-            SystemdCgroup = true
-
-EOF
+sudo cp containerd-config.toml /etc/containerd/config.toml
 ```
 
 To see the default configuration, do
 ```shell
-containerd config default
+containerd config default >> containerd-defaults.toml
 ```
 
-Create the `containerd.service` systemd unit file:
-
+#### Create the `containerd.service` systemd unit file:
 ```shell
-cat <<EOF | sudo tee /etc/systemd/system/containerd.service
-[Unit]
-Description=containerd container runtime
-Documentation=https://containerd.io
-After=network.target
-
-[Service]
-ExecStartPre=/sbin/modprobe overlay
-ExecStart=/bin/containerd
-Restart=always
-RestartSec=5
-Delegate=yes
-KillMode=process
-OOMScoreAdjust=-999
-LimitNOFILE=1048576
-LimitNPROC=infinity
-LimitCORE=infinity
-
-[Install]
-WantedBy=multi-user.target
-EOF
+sudo cp containerd.service /etc/systemd/system/containerd.service
 ```
 
+#### Configure `crictl`
 ```shell
-cat <<EOF | sudo tee /etc/crictl.yaml
-runtime-endpoint: "unix:///run/containerd/containerd.sock"
-image-endpoint: "unix:///run/containerd/containerd.sock"
-timeout: 2
-debug: true
-pull-image-on-create: false
-disable-pull-on-run: false
-EOF
+sudo cp crictl.yaml /etc/crictl.yaml
 ```
 
 ### Configure the Kubelet
@@ -157,7 +95,7 @@ sudo mv ca.pem /var/lib/kubernetes/
 
 ```
 
-Create the `kubelet-config.yaml` configuration file:
+#### Create the `kubelet-config.yaml` configuration file:
 
 ```
 cat <<EOF | sudo tee /var/lib/kubelet/kubelet-config.yaml
@@ -184,30 +122,9 @@ EOF
 
 > The `resolvConf` configuration is used to avoid loops when using CoreDNS for service discovery on systems running `systemd-resolved`. 
 
-Create the `kubelet.service` systemd unit file:
-
-```
-cat <<EOF | sudo tee /etc/systemd/system/kubelet.service
-[Unit]
-Description=Kubernetes Kubelet
-Documentation=https://github.com/kubernetes/kubernetes
-After=containerd.service
-Requires=containerd.service
-
-[Service]
-ExecStart=/usr/local/bin/kubelet \\
-  --config=/var/lib/kubelet/kubelet-config.yaml \\
-  --container-runtime=remote \\
-  --container-runtime-endpoint=unix:///var/run/containerd/containerd.sock \\
-  --kubeconfig=/var/lib/kubelet/kubeconfig \\
-  --register-node=true \\
-  --v=2
-Restart=on-failure
-RestartSec=5
-
-[Install]
-WantedBy=multi-user.target
-EOF
+#### Create the `kubelet.service` systemd unit file:
+```shell
+sudo cp kubelet.service /etc/systemd/system/kubelet.service
 ```
 
 ### Configure the Kubernetes Proxy
@@ -218,34 +135,15 @@ sudo mv kube-proxy.kubeconfig /var/lib/kube-proxy/kubeconfig
 
 Create the `kube-proxy-config.yaml` configuration file:
 
+```shell
+sudo cp kube-proxy-config.yaml /var/lib/kube-proxy/kube-proxy-config.yaml
 ```
-cat <<EOF | sudo tee /var/lib/kube-proxy/kube-proxy-config.yaml
-kind: KubeProxyConfiguration
-apiVersion: kubeproxy.config.k8s.io/v1alpha1
-clientConnection:
-  kubeconfig: "/var/lib/kube-proxy/kubeconfig"
-mode: "iptables"
-clusterCIDR: "10.200.0.0/16"
-EOF
-```
+
 
 Create the `kube-proxy.service` systemd unit file:
 
-```
-cat <<EOF | sudo tee /etc/systemd/system/kube-proxy.service
-[Unit]
-Description=Kubernetes Kube Proxy
-Documentation=https://github.com/kubernetes/kubernetes
-
-[Service]
-ExecStart=/usr/local/bin/kube-proxy \\
-  --config=/var/lib/kube-proxy/kube-proxy-config.yaml
-Restart=on-failure
-RestartSec=5
-
-[Install]
-WantedBy=multi-user.target
-EOF
+```shell
+sudo cp kube-proxy.service /etc/systemd/system/kube-proxy.service
 ```
 
 ### Start the Worker Services
