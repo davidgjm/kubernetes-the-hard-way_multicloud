@@ -12,13 +12,13 @@ Generate a kubeconfig file suitable for authenticating as the `admin` user:
 
 ```
 {
-  KUBERNETES_PUBLIC_ADDRESS=$(az network public-ip show -g kthw -n kubernetes-the-hard-way --query 'ipAddress' | jq -r .)
-  INTERNAL_IP=$(multipass list | grep controller-0 | awk '{print $3}')
+
+  KUBERNETES_PRIVATE_ADDRESS=$(multipass list | grep controller-0 | awk '{print $3}')
 
   kubectl config set-cluster kubernetes-the-hard-way \
     --certificate-authority=ca.pem \
     --embed-certs=true \
-    --server=https://${INTERNAL_IP}:6443
+    --server=https://${KUBERNETES_PRIVATE_ADDRESS}:6443
 
   kubectl config set-credentials admin \
     --client-certificate=admin.pem \

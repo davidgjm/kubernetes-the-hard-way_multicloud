@@ -27,35 +27,6 @@ ssh worker-0
 
 ### Configure CNI Networking
 
-Retrieve the Pod CIDR range for the current compute instance:
-
-```
-POD_CIDR=$(curl -s -H "Metadata-Flavor: Google" \
-  http://metadata.google.internal/computeMetadata/v1/instance/attributes/pod-cidr)
-```
-
-Create the `bridge` network configuration file:
-
-```
-cat <<EOF | sudo tee /etc/cni/net.d/10-bridge.conf
-{
-    "cniVersion": "1.1.0",
-    "name": "bridge",
-    "type": "bridge",
-    "bridge": "cnio0",
-    "isGateway": true,
-    "ipMasq": true,
-    "ipam": {
-        "type": "host-local",
-        "ranges": [
-          [{"subnet": "${POD_CIDR}"}]
-        ],
-        "routes": [{"dst": "0.0.0.0/0"}]
-    }
-}
-EOF
-```
-
 Create the `loopback` network configuration file:
 ```shell
 sudo cp 99-loopback.conf /etc/cni/net.d/99-loopback.conf
@@ -67,22 +38,20 @@ sudo cp 99-loopback.conf /etc/cni/net.d/99-loopback.conf
 
 Copy the configuration file from home directory
 ```shell
-sudo cp containerd-config.toml /etc/containerd/config.toml
+sudo mv containerd-config.toml /etc/containerd/config.toml
 ```
 
-To see the default configuration, do
-```shell
-containerd config default >> containerd-defaults.toml
-```
+> To see the default configuration, do `containerd config default >> containerd-defaults.toml`
+
 
 #### Create the `containerd.service` systemd unit file:
 ```shell
-sudo cp containerd.service /etc/systemd/system/containerd.service
+sudo mv containerd.service /etc/systemd/system/containerd.service
 ```
 
 #### Configure `crictl`
 ```shell
-sudo cp crictl.yaml /etc/crictl.yaml
+sudo mv crictl.yaml /etc/crictl.yaml
 ```
 
 ### Configure the Kubelet
@@ -125,7 +94,7 @@ EOF
 
 #### Create the `kubelet.service` systemd unit file:
 ```shell
-sudo cp kubelet.service /etc/systemd/system/kubelet.service
+sudo mv kubelet.service /etc/systemd/system/kubelet.service
 ```
 
 ### Configure the Kubernetes Proxy
@@ -137,14 +106,14 @@ sudo mv kube-proxy.kubeconfig /var/lib/kube-proxy/kubeconfig
 Create the `kube-proxy-config.yaml` configuration file:
 
 ```shell
-sudo cp kube-proxy-config.yaml /var/lib/kube-proxy/kube-proxy-config.yaml
+sudo mv kube-proxy-config.yaml /var/lib/kube-proxy/kube-proxy-config.yaml
 ```
 
 
 Create the `kube-proxy.service` systemd unit file:
 
 ```shell
-sudo cp kube-proxy.service /etc/systemd/system/kube-proxy.service
+sudo mv kube-proxy.service /etc/systemd/system/kube-proxy.service
 ```
 
 ### Start the Worker Services
@@ -166,7 +135,7 @@ sudo cp kube-proxy.service /etc/systemd/system/kube-proxy.service
 List the registered Kubernetes nodes:
 
 ```
-az vm run-command invoke -g kthw -n controller-0 --command-id RunShellScript --scripts "kubectl get nodes --kubeconfig admin.kubeconfig"
+kubectl get nodes --kubeconfig admin.kubeconfig
 ```
 
 > output
