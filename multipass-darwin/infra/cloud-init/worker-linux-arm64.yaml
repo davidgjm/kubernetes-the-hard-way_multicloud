@@ -1,0 +1,37 @@
+#cloud-config
+ssh_authorized_keys:
+  - ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAACAQCxNR/naFi+Me0Ur3xOnPFAd9DJKW6PXXoMxIAKDYR6t0tv8lgoIz7plJ8L72LE36nmpUUaA0/HHBT1RcnVx3uKMmPOAmqSK7k/GDqOuSZIi9NCHaGUKSCySdaEBnMiwUkr2EYFej1mzUuhxnwMl4TWN8bienFFFS6sKPfwZBWc3HiGd/uHuwEx+DEavfXFE/o73MhcFl8gcYuMAT1FBZHRUQEABlbnJ+mNYtT/G4kiIiOzDfLuDQOGy394iEXpuE0yVpRX/joKMKeWWr1mJDyAmq5jQ7qle8kfK/GOeQ631r0IVgiBvXEh4Sfx1lw+Bcm9C1XAIm041FpPD4l7GG6k8qzWLhSSTwd+rbfUhdK0WX3TQXJ/1aZhuu+Q41HkGn/g0erv6+FLJsVS+dVpBE4MjuBhw09TXoNnTzVWu5F4tS2PpC+cn+0xWx7Xy7HD49PvUPSEW9ucaQmwxmHjolxn9Xah8i0AVpP8Si1sXbCeB9rum5DK1kw2bC3qa8tR8n9O7nsoJx2eaDgkLa8yHi4k8EOtFFtnJ4/sI08IyV3DasskRx+fZUzTOx/cag/msCFX7QG1XQ5jRMwZgcQkYwXI5cpmo4LD34w0tVJGKI8AeR3SV5U64smE9meSnBjeXI/j0xxCvzOMrotC94k+J8XGppev96hbmpvtT+uXvMQTSw== mykey.local
+  - ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQD21Ec09Bks1+FIU7wErIh+CCNP5sSCRXr5/R1//kTabLgcagoHpkP1q7taiB1KlcPYpHjor2rwEG4HLMXbg7WULhvROaFN5wF8UjLp7oTvxQLyyaOG5oO6AI6pODu2KuKlHEh1gCICGlpsbm8qu0vt7+rROeveNllQytn7IGiYKckOC15RYJn8brZwXB5f3zANfyRthbiYO4hnqozX7KdbAxSnT+3asqOxloFD9xyi4G15pLSi49fWRCedxvwR2dzXuQEpx14klFzS2bBL2xr1R1WUP6+66J2j1I51GuMcTYUBXhg36sV6EeCJUhzdv10h40gccnyPRJQ36wMO3fpB mykey
+package_upgrade: true
+packages:
+  - net-tools
+  - socat
+  - conntrack
+  - ipset
+  - jq
+
+runcmd:
+  - echo "net.ipv4.conf.all.forwarding=1" | sudo tee -a /etc/sysctl.conf
+  - echo "net.ipv6.conf.all.disable_ipv6=1" | sudo tee -a /etc/sysctl.conf
+  - echo "net.ipv6.conf.default.disable_ipv6=1" | sudo tee -a /etc/sysctl.conf
+  - echo "net.ipv6.conf.lo.disable_ipv6=1" | sudo tee -a /etc/sysctl.conf
+  - sudo swapoff -a
+  - wget https://github.com/kubernetes-sigs/cri-tools/releases/download/v1.26.0/crictl-v1.26.0-linux-arm64.tar.gz
+  - wget https://github.com/opencontainers/runc/releases/download/v1.1.9/runc.arm64
+  - wget https://github.com/containernetworking/plugins/releases/download/v1.1.0/cni-plugins-linux-arm64-v1.1.0.tgz
+  - wget https://github.com/containerd/containerd/releases/download/v1.6.4/containerd-1.6.4-linux-arm64.tar.gz
+  - sudo mkdir -p /etc/containerd/ /etc/cni/net.d /opt/cni/bin
+  - mkdir containerd
+  - tar -xvf crictl-v1.26.0-linux-arm64.tar.gz
+  - tar -xvf containerd-1.6.4-linux-arm64.tar.gz -C containerd
+  - sudo tar -xvf cni-plugins-linux-arm64-v1.1.0.tgz -C /opt/cni/bin/
+  - sudo mv runc.arm64 runc
+  - chmod +x crictl runc
+  - sudo mv crictl runc /usr/local/bin/
+  - sudo mv containerd/bin/* /bin/
+  - wget https://dl.k8s.io/v1.26.0/bin/linux/arm64/kubectl
+  - wget https://dl.k8s.io/v1.26.0/bin/linux/arm64/kube-proxy
+  - wget https://dl.k8s.io/v1.26.0/bin/linux/arm64/kubelet
+  - sudo mkdir -p /var/lib/kubelet /var/lib/kube-proxy /var/lib/kubernetes /var/run/kubernetes
+  - chmod +x kubectl kube-proxy kubelet
+  - sudo mv kubectl kube-proxy kubelet /usr/local/bin/
