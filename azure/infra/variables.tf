@@ -5,7 +5,7 @@ variable "region" {
 }
 
 variable "resource_group_name" {
-  default = "kthw"
+  default = "kubernetes-the-hard-way"
 }
 
 
@@ -23,10 +23,46 @@ variable "spot_max_price" {
 }
 
 
-variable "control_plane_cidr" {
-  default = "10.240.0.128/28"
+variable "control_plane" {
+  type = object({
+    name        = string
+    subnet_cidr = string
+  })
+
+  default = {
+    name        = "k8s-control-plane"
+    subnet_cidr = "10.240.0.32/28"
+  }
 }
 
+
+variable "nodes" {
+  type = object({
+    name        = string
+    subnet_cidr = string
+  })
+  default = {
+    name        = "k8s-nodes"
+    subnet_cidr = "10.240.0.64/27"
+  }
+}
+
+variable "api_server_lb" {
+  type = object({
+    name       = string
+    private_ip = string
+    public_ip  = object({
+      name = string
+    })
+  })
+  default = {
+    name       = "api-server-lb"
+    private_ip = "10.240.0.37" //the first 4 ips and last ip are reserved.
+    public_ip  = {
+      name = "api-server-pip"
+    }
+  }
+}
 
 variable "dmz_zone" {
   type = object({
@@ -52,7 +88,7 @@ variable "dmz_zone" {
   }
 }
 
-# configuration for both control plan and worker nodes are in the same subnet
+# configuration for both control plane and worker nodes are in the same subnet
 variable "kubernetes" {
   type = object({
     name = string
