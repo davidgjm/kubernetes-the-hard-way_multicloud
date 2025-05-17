@@ -15,7 +15,7 @@ for controller in controller-0 controller-1 controller-2; do
     ${controller}:~/etcd-files/
   ssh ${controller} sudo mv ~/etcd-files/* /root
   ssh ${controller} sudo chown -R root: /root/
-  ssh ${controller} sudo /root/${controller}_etcd.service /root/etcd.service
+  ssh ${controller} sudo mv /root/${controller}_etcd.service /root/etcd.service
 done
 ```
 
@@ -77,5 +77,18 @@ etcdctl member list
 ```text
 6702b0a34e2cfd39, started, controller, http://127.0.0.1:2380, http://127.0.0.1:2379, false
 ```
+
+### etcd cluster
+
+List the etcd cluster members:
+
+```shell
+sudo ETCDCTL_API=3 etcdctl member list \
+  --endpoints=https://127.0.0.1:2379 \
+  --cacert=/etc/etcd/ca.crt \
+  --cert=/etc/etcd/kube-api-server.crt \
+  --key=/etc/etcd/kube-api-server.key
+```
+
 
 Next: [Bootstrapping the Kubernetes Control Plane](08-bootstrapping-kubernetes-controllers.md)
