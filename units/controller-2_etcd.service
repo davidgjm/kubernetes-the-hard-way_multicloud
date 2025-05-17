@@ -6,14 +6,14 @@ Documentation=https://github.com/etcd-io/etcd
 Type=notify
 ExecStart=/usr/local/bin/etcd \
   --name controller-2 \
+  --client-cert-auth \
+  --trusted-ca-file=/etc/etcd/ca.crt \
   --cert-file=/etc/etcd/kube-api-server.crt \
   --key-file=/etc/etcd/kube-api-server.key \
+  --peer-client-cert-auth \
+  --peer-trusted-ca-file=/etc/etcd/ca.crt \
   --peer-cert-file=/etc/etcd/kube-api-server.crt \
   --peer-key-file=/etc/etcd/kube-api-server.key \
-  --trusted-ca-file=/etc/etcd/ca.crt \
-  --peer-trusted-ca-file=/etc/etcd/ca.crt \
-  --peer-client-cert-auth \
-  --client-cert-auth \
   --initial-advertise-peer-urls https://172.16.100.212:2380 \
   --listen-peer-urls https://172.16.100.212:2380 \
   --listen-client-urls https://172.16.100.212:2379,https://127.0.0.1:2379 \
