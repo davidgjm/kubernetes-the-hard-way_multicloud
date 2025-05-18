@@ -7,17 +7,22 @@ In this lab you will bootstrap the Kubernetes control plane. The following compo
 Connect to the `jumpbox` and copy Kubernetes binaries and systemd unit files to the `server` machine:
 
 ```bash
-scp \
-  downloads/controller/kube-apiserver \
-  downloads/controller/kube-controller-manager \
-  downloads/controller/kube-scheduler \
-  downloads/client/kubectl \
-  units/kube-apiserver.service \
-  units/kube-controller-manager.service \
-  units/kube-scheduler.service \
-  configs/kube-scheduler.yaml \
-  configs/kube-apiserver-to-kubelet.yaml \
-  root@server:~/
+for controller in controller-0 controller-1 controller-2; do
+  scp \
+    downloads/controller/kube-apiserver \
+    downloads/controller/kube-controller-manager \
+    downloads/controller/kube-scheduler \
+    downloads/client/kubectl \
+    units/kube-apiserver.service \
+    units/kube-controller-manager.service \
+    units/kube-scheduler.service \
+    configs/kube-scheduler.yaml \
+    configs/kube-apiserver-to-kubelet.yaml \
+    ${controller}:~/control-plane
+
+  ssh ${controller} sudo chown -R root: ~/control-plane
+  ssh ${controller} sudo mv ~/control-plane/* /root
+done
 ```
 
 The commands in this lab must be run on the `server` machine. Login to the `server` machine using the `ssh` command. Example:
