@@ -121,9 +121,9 @@ done < machines.txt
 ```
 
 ```text
-server.kubernetes.local
-node-0.kubernetes.local
-node-1.kubernetes.local
+server.home.lab
+node-0.home.lab
+node-1.home.lab
 ```
 
 ## Host Lookup Table
