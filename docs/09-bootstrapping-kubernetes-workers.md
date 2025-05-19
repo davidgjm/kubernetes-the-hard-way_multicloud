@@ -12,14 +12,14 @@ Copy the Kubernetes binaries and systemd unit files to each worker instance:
 for HOST in node-0 node-1 node-2; do
   SUBNET=$(grep ${HOST} machines.txt | cut -d " " -f 4)
   sed "s|SUBNET|$SUBNET|g" \
-    configs/10-bridge.conf > ${HOST}_10-bridge.conf
+    configs/10-bridge.conf > 10-bridge.conf
 
   sed "s|SUBNET|$SUBNET|g" \
-    configs/kubelet-config.yaml > ${HOST}_kubelet-config.yaml
+    configs/kubelet-config.yaml > kubelet-config.yaml
 
-  scp ${HOST}_10-bridge.conf ${HOST}:~/10-bridge.conf
-  scp ${HOST}_kubelet-config.yaml ${HOST}:~/kubelet-config.yaml
-  
+  scp 10-bridge.conf kubelet-config.yaml \
+    ${HOST}:~/
+
   ssh ${HOST} sudo chown root: 10-bridge.conf kubelet-config.yaml
   ssh ${HOST} sudo mv 10-bridge.conf kubelet-config.yaml /root
 done
