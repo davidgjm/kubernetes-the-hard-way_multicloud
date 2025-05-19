@@ -2,7 +2,6 @@
 Description=Kubernetes Scheduler
 Documentation=https://github.com/kubernetes/kubernetes
 
-# https://kubernetes.io/docs/reference/config-api/kube-scheduler-config.v1/
 [Service]
 ExecStart=/usr/local/bin/kube-scheduler \
   --config=/etc/kubernetes/config/kube-scheduler.yaml \
