@@ -11,7 +11,9 @@ scp \
   downloads/controller/etcd \
   downloads/client/etcdctl \
   units/etcd.service \
-  root@server:~/
+  server:~/etcd-files/
+ssh server sudo mv ~/etcd-files/* /root
+ssh server sudo chown -R root: /root/
 ```
 
 The commands in this lab must be run on the `server` machine. Login to the `server` machine using the `ssh` command. Example:

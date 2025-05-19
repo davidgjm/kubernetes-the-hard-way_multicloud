@@ -81,15 +81,19 @@ Copy the appropriate certificates and private keys to the `node-0` and `node-1` 
 
 ```bash
 for host in node-0 node-1; do
-  ssh root@${host} mkdir /var/lib/kubelet/
+  ssh ${host} mkdir ~/kubelet/
 
-  scp ca.crt root@${host}:/var/lib/kubelet/
+  scp ca.crt ${host}:~/kubelet/
 
   scp ${host}.crt \
-    root@${host}:/var/lib/kubelet/kubelet.crt
+    ${host}:~/kubelet/kubelet.crt
 
   scp ${host}.key \
-    root@${host}:/var/lib/kubelet/kubelet.key
+    ${host}:~/kubelet/kubelet.key
+  
+  ssh ${host} sudo mkdir /var/lib/kubelet/
+  ssh ${host} sudo mv ~/kubelet/* /var/lib/kubelet/
+  ssh ${host} sudo chown -R root: /var/lib/kubelet/
 done
 ```
 
@@ -100,7 +104,10 @@ scp \
   ca.key ca.crt \
   kube-api-server.key kube-api-server.crt \
   service-accounts.key service-accounts.crt \
-  root@server:~/
+  server:~/server/
+ssh server sudo mv ~/server/* /root/
+ssh server sudo chown -R root: /root
+ssh server sudo rm -rf /server
 ```
 
 > The `kube-proxy`, `kube-controller-manager`, `kube-scheduler`, and `kubelet` client certificates will be used to generate client authentication configuration files in the next lab.

@@ -24,7 +24,9 @@ envsubst < configs/encryption-config.yaml \
 Copy the `encryption-config.yaml` encryption config file to each controller instance:
 
 ```bash
-scp encryption-config.yaml root@server:~/
+scp encryption-config.yaml server:~/
+ssh server sudo mv encryption-config.yaml /root
+ssh server sudo chown root: /root/encryption-config.yaml
 ```
 
 Next: [Bootstrapping the etcd Cluster](07-bootstrapping-etcd.md)

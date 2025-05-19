@@ -18,7 +18,10 @@ for HOST in node-0 node-1; do
     configs/kubelet-config.yaml > kubelet-config.yaml
 
   scp 10-bridge.conf kubelet-config.yaml \
-  root@${HOST}:~/
+    ${HOST}:~/
+  
+  ssh ${HOST} sudo chown root: 10-bridge.conf kubelet-config.yaml
+  ssh ${HOST} sudo mv 10-bridge.conf kubelet-config.yaml /root  
 done
 ```
 
@@ -33,7 +36,11 @@ for HOST in node-0 node-1; do
     units/containerd.service \
     units/kubelet.service \
     units/kube-proxy.service \
-    root@${HOST}:~/
+    ${HOST}:~/node-components
+
+  ssh ${HOST} sudo chown -R root: ~/node-components
+  ssh ${HOST} sudo mv ~/node-components/* /root
+  ssh ${HOST} sudo rm -rf ~/node-components/
 done
 ```
 
@@ -41,7 +48,11 @@ done
 for HOST in node-0 node-1; do
   scp \
     downloads/cni-plugins/* \
-    root@${HOST}:~/cni-plugins/
+    ${HOST}:~/cni-plugins/
+
+  ssh ${HOST} sudo chown -R root: ~/cni-plugins/
+  ssh ${HOST} sudo mv ~/cni-plugins/ /root
+  ssh ${HOST} sudo rm -rf ~/cni-plugins/
 done
 ```
 

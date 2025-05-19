@@ -17,7 +17,10 @@ scp \
   units/kube-scheduler.service \
   configs/kube-scheduler.yaml \
   configs/kube-apiserver-to-kubelet.yaml \
-  root@server:~/
+  server:~/control-plane
+ssh server sudo chown -R root: ~/control-plane
+ssh server sudo mv ~/control-plane/* /root
+ssh server sudo rm -rf ~/control-plane/
 ```
 
 The commands in this lab must be run on the `server` machine. Login to the `server` machine using the `ssh` command. Example:
@@ -176,7 +179,7 @@ Make a HTTP request for the Kubernetes version info:
 
 ```bash
 curl --cacert ca.crt \
-  https://server.kubernetes.local:6443/version
+  https://server.home.lab:6443/version
 ```
 
 ```text
