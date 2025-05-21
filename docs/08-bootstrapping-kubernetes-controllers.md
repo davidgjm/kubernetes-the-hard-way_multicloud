@@ -146,8 +146,7 @@ journalctl -u kube-apiserver
 At this point the Kubernetes control plane components should be up and running. Verify this using the `kubectl` command line tool:
 
 ```bash
-kubectl cluster-info \
-  --kubeconfig admin.kubeconfig
+kubectl --kubeconfig admin.kubeconfig cluster-info
 ```
 
 ```text

@@ -91,7 +91,9 @@ List the etcd cluster members:
 ENDPOINTS=172.16.100.210:2379,172.16.100.211:2379,172.16.100.212:2379
 ETCD_OPTIONS="--endpoints=https://127.0.0.1:2379 --cacert=/etc/etcd/ca.crt --cert=/etc/etcd/kube-api-server.crt --key=/etc/etcd/kube-api-server.key"
 
+```
 
+```shell
 etcdctl --endpoints=$ENDPOINTS $ETCD_OPTIONS member list
 ```
 
