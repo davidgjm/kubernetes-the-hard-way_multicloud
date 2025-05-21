@@ -19,14 +19,53 @@ cat machines.txt
 ```
 
 ```text
-XXX.XXX.XXX.XXX server.kubernetes.local server
-XXX.XXX.XXX.XXX node-0.kubernetes.local node-0 10.200.0.0/24
-XXX.XXX.XXX.XXX node-1.kubernetes.local node-1 10.200.1.0/24
+172.16.100.210 controller-0.home.lab controller-0
+172.16.100.211 controller-1.home.lab controller-1
+172.16.100.212 controller-2.home.lab controller-2
+172.16.100.220 node-0.home.lab node-0 10.200.0.0/24
+172.16.100.221 node-1.home.lab node-1 10.200.1.0/24
+172.16.100.222 node-2.home.lab node-2 10.200.2.0/24
 ```
 
 Now it's your turn to create a `machines.txt` file with the details for the three machines you will be using to create your Kubernetes cluster. Use the example machine database from above and add the details for your machines.
 
 ## Configuring SSH Access
+
+### Without root SSH access
+
+>[NOTE] Make sure your "search domain" in your VMs is configured to the domain name used in your environment.
+
+#### DNS searchdomain
+
+```shell
+cat /etc/resolv.conf
+```
+
+
+```ini
+# This is /run/systemd/resolve/resolv.conf managed by man:systemd-resolved(8).
+# Do not edit.
+#
+# This file might be symlinked as /etc/resolv.conf. If you're looking at
+# /etc/resolv.conf and seeing this text, you have followed the symlink.
+#
+# This is a dynamic resolv.conf file for connecting local clients directly to
+# all known uplink DNS servers. This file lists all configured search domains.
+#
+# Third party programs should typically not access this file directly, but only
+# through the symlink at /etc/resolv.conf. To manage man:resolv.conf(5) in a
+# different way, replace this symlink by a static file or a different symlink.
+#
+# See man:systemd-resolved.service(8) for details about the supported modes of
+# operation for /etc/resolv.conf.
+
+nameserver 172.31.255.2
+search home.lab
+```
+
+
+
+
 
 SSH will be used to configure the machines in the cluster. Verify that you have `root` SSH access to each machine listed in your machine database. You may need to enable root SSH access on each node by updating the sshd_config file and restarting the SSH server.
 
