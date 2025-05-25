@@ -14,10 +14,13 @@ cgroupDriver: systemd
 containerRuntimeEndpoint: "unix:///var/run/containerd/containerd.sock"
 enableServer: true
 failSwapOn: false
-maxPods: 16
+maxPods: 64
 memorySwap:
   swapBehavior: NoSwap
 port: 10250
+clusterDNS:
+  - 10.32.0.10
+clusterDomain: "cluster.local"
 resolvConf: "/etc/resolv.conf"
 registerNode: true
 runtimeRequestTimeout: "15m"
